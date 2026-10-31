@@ -1,0 +1,56 @@
+﻿
+{% extends "base.html" %}
+
+{% block title %}فروشگاه | CyberSite{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/products.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="public-store">
+
+    <div class="store-header">
+        <div>
+            <p class="admin-label">CYBERSITE DIGITAL STORE</p>
+            <h1>فروشگاه</h1>
+            <p>محصولات و خدمات دیجیتال</p>
+        </div>
+    </div>
+
+    <div class="public-product-grid">
+        {% for product in products %}
+            <article class="public-product-card">
+
+                {% if product.image_filename %}
+                    <img src="{{ url_for('products.product_image', filename=product.image_filename) }}"
+                         alt="{{ product.title }}">
+                {% else %}
+                    <div class="product-no-image">CYBER PRODUCT</div>
+                {% endif %}
+
+                <div class="public-product-content">
+                    <small>{{ product.category.name }}</small>
+                    <h2>{{ product.title }}</h2>
+                    <p>{{ product.description or "توضیحاتی ثبت نشده است." }}</p>
+
+                    <strong>
+                        {{ "{:,.2f}".format(product.price) }}
+                    </strong>
+
+                    {% if product.stock > 0 %}
+                        <span class="stock-available">موجود</span>
+                    {% else %}
+                        <span class="stock-unavailable">ناموجود</span>
+                    {% endif %}
+                </div>
+
+            </article>
+        {% else %}
+            <p>هنوز محصولی در فروشگاه ثبت نشده است.</p>
+        {% endfor %}
+    </div>
+
+</section>
+{% endblock %}

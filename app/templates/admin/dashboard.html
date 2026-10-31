@@ -1,0 +1,61 @@
+﻿
+{% extends "base.html" %}
+
+{% block title %}داشبورد مدیریت | CyberSite{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="admin-dashboard">
+
+    <div class="dashboard-header">
+        <div>
+            <p class="admin-label">CYBERSITE CONTROL CENTER</p>
+            <h1>داشبورد مدیریت</h1>
+            <p>خوش آمدید، {{ admin.username }}</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('admin.logout') }}">
+            <input type="hidden" name="csrf_token"
+                   value="{{ csrf_token() }}">
+            <button class="logout-button" type="submit">
+                خروج از حساب
+            </button>
+        </form>
+    </div>
+
+    <div class="dashboard-grid">
+
+        <a href="{{ url_for('products.manage_products') }}"
+           class="dashboard-card">
+            <span>◈</span>
+            <h2>مدیریت فروشگاه</h2>
+            <p>مشاهده بخش محصولات</p>
+        </a>
+
+        <a href="{{ url_for('blog.index') }}"
+           class="dashboard-card">
+            <span>▤</span>
+            <h2>مدیریت وبلاگ</h2>
+            <p>مشاهده بخش نوشته‌ها</p>
+        </a>
+
+        <a href="{{ url_for('contact.index') }}"
+           class="dashboard-card">
+            <span>⌘</span>
+            <h2>بخش تماس</h2>
+            <p>مشاهده اطلاعات تماس</p>
+        </a>
+
+    </div>
+
+    <div class="dashboard-status">
+        <span class="status-dot"></span>
+        نشست مدیریت فعال است
+    </div>
+
+</section>
+{% endblock %}

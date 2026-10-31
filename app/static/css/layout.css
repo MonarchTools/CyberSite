@@ -1,0 +1,30 @@
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+.main-container {
+    width: min(1180px, 92%);
+    margin-inline: auto;
+    flex: 1;
+}
+
+.background-grid {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+
+    background-image:
+        linear-gradient(
+            rgba(0, 207, 255, .035) 1px,
+            transparent 1px
+        ),
+        linear-gradient(
+            90deg,
+            rgba(0, 207, 255, .035) 1px,
+            transparent 1px
+        );
+
+    background-size: 45px 45px;
+}

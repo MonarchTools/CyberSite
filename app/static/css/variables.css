@@ -1,0 +1,22 @@
+:root {
+    --bg-primary: #080D1B;
+    --bg-secondary: #101B32;
+    --bg-card: #111F38;
+
+    --blue-primary: #087CFF;
+    --blue-neon: #00CFFF;
+
+    --text-primary: #EAF2FF;
+    --text-secondary: #91A3BD;
+
+    --border-color: rgba(0, 207, 255, .16);
+
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 22px;
+
+    --shadow-blue:
+        0 0 30px rgba(8, 124, 255, .15);
+
+    --transition: .25s ease;
+}

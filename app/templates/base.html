@@ -1,0 +1,50 @@
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="theme-color" content="#080D1B">
+    <meta name="description" content="CyberSite - Personal Cyber Platform">
+
+    <title>{% block title %}CyberSite{% endblock %}</title>
+
+    <link rel="stylesheet"
+      href="{{ url_for('static', filename='css/variables.css') }}">
+
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/reset.css') }}">
+
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/layout.css') }}">
+
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/components.css') }}">
+
+    {% block page_css %}{% endblock %}
+
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/responsive.css') }}">
+
+
+
+<body>
+
+    <div class="background-grid"></div>
+
+    {% include "components/navbar.html" %}
+
+    <main class="main-container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <p>© 2026 CyberSite - All Rights Reserved</p>
+        <span>Powered by Python & Flask</span>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+</body>
+</html>

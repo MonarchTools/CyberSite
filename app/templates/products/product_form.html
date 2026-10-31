@@ -1,0 +1,83 @@
+﻿
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} | CyberSite{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/products.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="product-form-page">
+
+    <div class="product-form-card">
+        <p class="admin-label">CYBERSITE / PRODUCT EDITOR</p>
+        <h1>{{ page_title }}</h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="admin-alert {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <form method="POST"
+              enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+
+            <div class="admin-form-group">
+                {{ form.title.label }}
+                {{ form.title(class="admin-input", placeholder="نام محصول") }}
+                {% for error in form.title.errors %}
+                    <small class="form-error">{{ error }}</small>
+                {% endfor %}
+            </div>
+
+            <div class="admin-form-group">
+                {{ form.description.label }}
+                {{ form.description(class="admin-input", rows="5", placeholder="توضیحات محصول") }}
+            </div>
+
+            <div class="admin-form-group">
+                {{ form.price.label }}
+                {{ form.price(class="admin-input", placeholder="قیمت") }}
+                {% for error in form.price.errors %}
+                    <small class="form-error">{{ error }}</small>
+                {% endfor %}
+            </div>
+
+            <div class="admin-form-group">
+                {{ form.stock.label }}
+                {{ form.stock(class="admin-input", placeholder="تعداد موجودی") }}
+            </div>
+
+            <div class="admin-form-group">
+                {{ form.category_id.label }}
+                {{ form.category_id(class="admin-input") }}
+            </div>
+
+            <div class="admin-form-group">
+                {{ form.image.label }}
+                {{ form.image(class="admin-input") }}
+                <small>فرمت‌های مجاز: JPG، PNG و WEBP</small>
+            </div>
+
+            {% if product and product.image_filename %}
+                <div class="current-product-image">
+                    <p>تصویر فعلی:</p>
+                    <img src="{{ url_for('products.product_image', filename=product.image_filename) }}"
+                         alt="{{ product.title }}">
+                </div>
+            {% endif %}
+
+            {{ form.submit(class="store-button") }}
+        </form>
+
+        <a class="admin-back"
+           href="{{ url_for('products.manage_products') }}">
+            بازگشت به مدیریت فروشگاه
+        </a>
+    </div>
+
+</section>
+{% endblock %}

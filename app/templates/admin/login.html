@@ -1,0 +1,62 @@
+﻿
+{% extends "base.html" %}
+
+{% block title %}ورود مدیر | CyberSite{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="admin-auth">
+    <div class="admin-auth-card">
+
+        <div class="admin-icon">C</div>
+
+        <p class="admin-label">SECURE ADMIN ACCESS</p>
+        <h1>ورود مدیر</h1>
+
+        <p class="admin-subtitle">
+            برای ورود به پنل مدیریت اطلاعات خود را وارد کنید.
+        </p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="admin-alert {{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('admin.login') }}">
+            {{ form.hidden_tag() }}
+
+            <div class="admin-form-group">
+                {{ form.username.label }}
+                {{ form.username(
+                    class="admin-input",
+                    placeholder="نام کاربری",
+                    autocomplete="username"
+                ) }}
+            </div>
+
+            <div class="admin-form-group">
+                {{ form.password.label }}
+                {{ form.password(
+                    class="admin-input",
+                    placeholder="رمز عبور",
+                    autocomplete="current-password"
+                ) }}
+            </div>
+
+            {{ form.submit(class="admin-submit") }}
+        </form>
+
+        <a href="{{ url_for('home.index') }}" class="admin-back">
+            بازگشت به سایت
+        </a>
+
+    </div>
+</section>
+{% endblock %}

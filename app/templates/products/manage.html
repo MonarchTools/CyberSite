@@ -1,0 +1,130 @@
+﻿
+{% extends "base.html" %}
+
+{% block title %}مدیریت فروشگاه | CyberSite{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/products.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="store-admin">
+
+    <div class="store-header">
+        <div>
+            <p class="admin-label">CYBERSITE / STORE CONTROL</p>
+            <h1>مدیریت فروشگاه</h1>
+            <p>مدیریت محصولات و دسته‌بندی‌ها</p>
+        </div>
+
+        <a href="{{ url_for('products.create_product') }}"
+           class="store-button">
+            + افزودن محصول
+        </a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="admin-alert {{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endwith %}
+
+    <div class="category-panel">
+        <h2>دسته‌بندی‌ها</h2>
+
+        <form method="POST"
+              action="{{ url_for('products.create_category') }}"
+              class="category-form">
+            {{ category_form.hidden_tag() }}
+            {{ category_form.name(
+                class="admin-input",
+                placeholder="نام دسته‌بندی جدید"
+            ) }}
+            {{ category_form.submit(class="store-button") }}
+        </form>
+
+        <div class="category-list">
+            {% for category in categories %}
+                <div class="category-item">
+                    <span>{{ category.name }}</span>
+
+                    <form method="POST"
+                          action="{{ url_for('products.delete_category', category_id=category.id) }}">
+                        <input type="hidden" name="csrf_token"
+                               value="{{ csrf_token() }}">
+                        <button class="delete-button" type="submit">
+                            حذف
+                        </button>
+                    </form>
+                </div>
+            {% else %}
+                <p>هنوز دسته‌بندی‌ای ایجاد نشده است.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="products-panel">
+        <h2>محصولات ثبت‌شده</h2>
+
+        <div class="product-table-wrap">
+            <table class="product-table">
+                <thead>
+                    <tr>
+                        <th>تصویر</th>
+                        <th>نام محصول</th>
+                        <th>دسته‌بندی</th>
+                        <th>قیمت</th>
+                        <th>موجودی</th>
+                        <th>عملیات</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for product in products %}
+                        <tr>
+                            <td>
+                                {% if product.image_filename %}
+                                    <img class="product-thumb"
+                                         src="{{ url_for('products.product_image', filename=product.image_filename) }}"
+                                         alt="{{ product.title }}">
+                                {% else %}
+                                    <span>بدون تصویر</span>
+                                {% endif %}
+                            </td>
+
+                            <td>{{ product.title }}</td>
+                            <td>{{ product.category.name }}</td>
+                            <td>{{ "{:,.2f}".format(product.price) }}</td>
+                            <td>{{ product.stock }}</td>
+
+                            <td class="product-actions">
+                                <a href="{{ url_for('products.edit_product', product_id=product.id) }}">
+                                    ویرایش
+                                </a>
+
+                                <form method="POST"
+                                      action="{{ url_for('products.delete_product', product_id=product.id) }}"
+                                      onsubmit="return confirm('از حذف این محصول مطمئن هستید؟');">
+                                    <input type="hidden" name="csrf_token"
+                                           value="{{ csrf_token() }}">
+                                    <button class="delete-button" type="submit">
+                                        حذف
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="6">
+                                هنوز محصولی ثبت نشده است.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</section>
+{% endblock %}

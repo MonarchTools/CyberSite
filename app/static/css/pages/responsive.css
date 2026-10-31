@@ -1,0 +1,42 @@
+@media (max-width: 850px) {
+    .navbar {
+        flex-wrap: wrap;
+        gap: 18px;
+    }
+
+    .nav-links {
+        order: 3;
+        width: 100%;
+        overflow-x: auto;
+        padding: 10px 0;
+    }
+
+    .features {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .navbar {
+        padding: 15px;
+    }
+
+    .nav-links {
+        gap: 20px;
+        font-size: 13px;
+    }
+
+    .features {
+        grid-template-columns: 1fr;
+    }
+
+    .hero {
+        padding-top: 60px;
+    }
+
+    .footer {
+        flex-direction: column;
+        text-align: center;
+        gap: 12px;
+    }
+}

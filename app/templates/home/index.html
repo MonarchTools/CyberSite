@@ -1,0 +1,81 @@
+
+{% extends "base.html" %}
+
+{% block title %}خانه | CyberSite{% endblock %}
+
+{% block content %}
+
+{% block page_css %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/home.css') }}">
+{% endblock %}
+
+<section class="hero">
+
+    <div class="hero-badge">
+        <span class="status-dot"></span>
+        PERSONAL CYBER PLATFORM
+    </div>
+
+    <h1>
+        دنیای من در
+        <span class="gradient-text">فضای سایبری</span>
+    </h1>
+
+    <p class="hero-description">
+        به وب‌سایت شخصی من خوش آمدید.
+        اینجا دنیایی از برنامه‌نویسی،
+        تکنولوژی، امنیت سایبری و پروژه‌های من است.
+    </p>
+
+    <div class="hero-actions">
+        <a href="{{ url_for('products.index') }}" class="btn-primary">
+            مشاهده فروشگاه
+        </a>
+
+        <a href="{{ url_for('blog.index') }}" class="btn-secondary">
+            مطالعه وبلاگ
+        </a>
+    </div>
+
+    <div class="hero-terminal">
+        <div class="terminal-header">
+            <span></span>
+            <span></span>
+            <span></span>
+            <small>cybersite.exe</small>
+        </div>
+
+        <div class="terminal-body">
+            <p><span class="terminal-blue">root@cybersite:</span>~$ system_status</p>
+            <p class="terminal-success">[ ONLINE ] System initialized</p>
+            <p class="terminal-success">[ READY ] Waiting for next project...</p>
+            <p><span class="terminal-blue">root@cybersite:</span>~$ <span class="cursor">_</span></p>
+        </div>
+    </div>
+
+</section>
+
+<section class="features">
+
+    <div class="feature-card">
+        <span class="feature-icon">⌘</span>
+        <h3>برنامه‌نویسی</h3>
+        <p>پروژه‌ها و تجربیات برنامه‌نویسی</p>
+    </div>
+
+    <div class="feature-card">
+        <span class="feature-icon">⌬</span>
+        <h3>امنیت سایبری</h3>
+        <p>دنیای امنیت و تکنولوژی</p>
+    </div>
+
+    <div class="feature-card">
+        <span class="feature-icon">◈</span>
+        <h3>فروشگاه</h3>
+        <p>محصولات و خدمات دیجیتال</p>
+    </div>
+
+</section>
+
+{% endblock %}
