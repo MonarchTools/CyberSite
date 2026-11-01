@@ -29,6 +29,7 @@
             {% endfor %}
         {% endwith %}
 
+        {% if not locked %}
         <form method="POST" action="{{ url_for('admin.login') }}">
             {{ form.hidden_tag() }}
 
@@ -81,6 +82,7 @@
 
             {{ form.submit(class="admin-submit") }}
         </form>
+        {% endif %}
 
         <a href="{{ url_for('home.index') }}" class="admin-back">
             بازگشت به سایت

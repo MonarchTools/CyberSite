@@ -107,7 +107,7 @@
 
                                 <form method="POST"
                                       action="{{ url_for('products.delete_product', product_id=product.id) }}"
-                                      onsubmit="return confirm('از حذف این محصول مطمئن هستید؟');">
+                                      data-confirm="از حذف این محصول مطمئن هستید؟">
                                     <input type="hidden" name="csrf_token"
                                            value="{{ csrf_token() }}">
                                     <button class="delete-button" type="submit">

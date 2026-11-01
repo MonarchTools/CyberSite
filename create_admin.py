@@ -3,13 +3,14 @@ from pathlib import Path
 from getpass import getpass
 
 from dotenv import load_dotenv
+
+# .env باید پیش از import کردن app (و config) خوانده شود
+BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / ".env")
+
 from app import create_app
 from app.extensions import db
 from app.modules.admin.models import Admin
-
-
-BASE_DIR = Path(__file__).resolve().parent
-load_dotenv(BASE_DIR / ".env")
 
 app = create_app()
 

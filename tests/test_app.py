@@ -40,7 +40,6 @@ def test_home_page(client):
     [
         "/products/",
         "/blog/",
-        "/admin/",
         "/contact/",
     ],
 )
@@ -55,3 +54,10 @@ def test_site_settings_created(app):
 
         assert setting is not None
         assert setting.site_name == "CyberSite"
+
+
+def test_admin_requires_login(client):
+    response = client.get("/admin/")
+
+    assert response.status_code == 302
+    assert "/admin/login" in response.headers["Location"]

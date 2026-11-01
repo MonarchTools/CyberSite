@@ -1,12 +1,23 @@
 ﻿import os
 
 
+def _cookie_secure():
+    """کوکی Secure فقط وقتی فعال می‌شود که سایت واقعاً روی HTTPS باشد.
+
+    با ``SESSION_COOKIE_SECURE=1`` یا ``0`` در .env می‌شود دستی تعیین کرد.
+    """
+    explicit = os.getenv("SESSION_COOKIE_SECURE", "").strip()
+
+    if explicit in ("0", "1"):
+        return explicit == "1"
+
+    return os.getenv("SITE_URL", "").strip().lower().startswith("https://")
+
+
 class Config:
 
-    SECRET_KEY = os.getenv(
-        "SECRET_KEY",
-        "change-this-secret-key"
-    )
+    # بدون مقدار پیش‌فرض: اگر در .env نباشد، خارج از حالت توسعه برنامه اجرا نمی‌شود.
+    SECRET_KEY = os.getenv("SECRET_KEY")
 
     SQLALCHEMY_DATABASE_URI = os.getenv(
         "DATABASE_URL",
@@ -32,3 +43,22 @@ class Config:
     # حداقل مبلغ قابل پرداخت (ریال) و مدت نگه‌داشتن موجودی سفارش پرداخت‌نشده
     MIN_PAYMENT_RIAL = 10_000
     ORDER_RESERVATION_MINUTES = 60
+
+    # --- امنیت نشست و ورود ---
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+    SESSION_COOKIE_SECURE = _cookie_secure()
+    REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SAMESITE = "Lax"
+    REMEMBER_COOKIE_SECURE = _cookie_secure()
+
+    # بعد از این مدت بی‌فعالیتی، نشست مدیر منقضی می‌شود
+    ADMIN_SESSION_HOURS = 8
+
+    # قفل ورود: بعد از این تعداد تلاش ناموفق، IP به همین مدت قفل می‌شود
+    LOGIN_MAX_ATTEMPTS = 5
+    LOGIN_LOCK_MINUTES = 15
+
+    # تعداد پروکسی‌های معتبر جلوی برنامه (مثلاً 1 برای Nginx).
+    # فقط وقتی مقدار بدهید که واقعاً پشت پروکسی هستید؛ وگرنه IP قابل جعل می‌شود.
+    TRUSTED_PROXY_COUNT = int(os.getenv("TRUSTED_PROXY_COUNT", "0") or 0)
