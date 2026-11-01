@@ -11,6 +11,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from app.modules.admin.captcha import create_challenge, verify_challenge
 from app.modules.admin.forms import LoginForm
 from app.modules.admin.models import Admin
+from app.modules.contact.models import ContactMessage
 from app.modules.admin.throttle import (
     lock_remaining,
     register_failure,
@@ -32,9 +33,14 @@ _DUMMY_HASH = generate_password_hash("timing-equalizer-not-a-real-password")
 @admin_bp.route("/", methods=["GET"])
 @login_required
 def index():
+    unread_messages = ContactMessage.query.filter(
+        ContactMessage.is_read.is_(False)
+    ).count()
+
     return render_template(
         "admin/dashboard.html",
-        admin=current_user
+        admin=current_user,
+        unread_messages=unread_messages
     )
 
 

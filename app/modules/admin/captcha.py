@@ -24,7 +24,15 @@ from app.modules.admin.models import CaptchaChallenge
 
 CAPTCHA_LENGTH = 5
 CAPTCHA_TTL = 180  # ثانیه
-SESSION_KEY = "captcha_token"
+SESSION_KEY = "captcha_token"  # کلید کپچای ورود (purpose="login")
+
+
+def _session_key(purpose):
+    """هر فرم کلید نشست جدا دارد تا باز بودن چند فرم هم‌زمان چالش یکدیگر را باطل نکند."""
+    if purpose == "login":
+        return SESSION_KEY
+
+    return f"{SESSION_KEY}_{purpose}"
 
 # حروف و ارقام مبهم (I, O, 0, 1) حذف شده‌اند.
 ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -157,7 +165,7 @@ def _answer_hash(token, answer):
     return hmac.new(key, message, hashlib.sha256).hexdigest()
 
 
-def create_challenge():
+def create_challenge(purpose="login"):
     """چالش جدید می‌سازد، چالش قبلی همین نشست را باطل می‌کند و PNG برمی‌گرداند."""
     now = time.time()
 
@@ -165,7 +173,7 @@ def create_challenge():
         CaptchaChallenge.expires_at < now
     ).delete(synchronize_session=False)
 
-    previous = session.pop(SESSION_KEY, None)
+    previous = session.pop(_session_key(purpose), None)
 
     if previous:
         CaptchaChallenge.query.filter_by(token=previous).delete(
@@ -184,14 +192,14 @@ def create_challenge():
     )
     db.session.commit()
 
-    session[SESSION_KEY] = token
+    session[_session_key(purpose)] = token
 
     return render_captcha(text)
 
 
-def verify_challenge(answer):
+def verify_challenge(answer, purpose="login"):
     """پاسخ را بررسی می‌کند. چالش در هر حالت مصرف (حذف) می‌شود."""
-    token = session.pop(SESSION_KEY, None)
+    token = session.pop(_session_key(purpose), None)
     answer = normalize_answer(answer)
 
     if not token or len(answer) != CAPTCHA_LENGTH:

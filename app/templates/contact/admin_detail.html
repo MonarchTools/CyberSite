@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}پیام {{ message.id }} | CyberSite{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/products.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/shop.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="store-admin shop-page">
+
+    <div class="store-header">
+        <div>
+            <p class="admin-label">CYBERSITE / MESSAGE #{{ message.id }}</p>
+            <h1>{{ message.subject or "بدون موضوع" }}</h1>
+        </div>
+    </div>
+
+    <div class="shop-card">
+        <dl class="order-meta">
+            <dt>نام</dt>
+            <dd>{{ message.name }}</dd>
+
+            <dt>ایمیل</dt>
+            <dd dir="ltr"><a href="mailto:{{ message.email }}">{{ message.email }}</a></dd>
+
+            {% if message.phone %}
+                <dt>موبایل</dt>
+                <dd dir="ltr">{{ message.phone }}</dd>
+            {% endif %}
+
+            <dt>تاریخ (UTC)</dt>
+            <dd dir="ltr">{{ message.created_at.strftime('%Y-%m-%d %H:%M') }}</dd>
+        </dl>
+
+        <div class="message-body">{{ message.message }}</div>
+
+        <form method="POST"
+              action="{{ url_for('contact.delete_message', message_id=message.id) }}"
+              data-confirm="از حذف این پیام مطمئن هستید؟">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="delete-button" type="submit">حذف پیام</button>
+        </form>
+    </div>
+
+    <a class="admin-back" href="{{ url_for('contact.manage_messages') }}">
+        بازگشت به صندوق پیام
+    </a>
+
+</section>
+{% endblock %}

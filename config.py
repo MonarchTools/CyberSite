@@ -62,3 +62,6 @@ class Config:
     # تعداد پروکسی‌های معتبر جلوی برنامه (مثلاً 1 برای Nginx).
     # فقط وقتی مقدار بدهید که واقعاً پشت پروکسی هستید؛ وگرنه IP قابل جعل می‌شود.
     TRUSTED_PROXY_COUNT = int(os.getenv("TRUSTED_PROXY_COUNT", "0") or 0)
+
+    # حداکثر پیام فرم تماس از هر IP در یک ساعت
+    CONTACT_MAX_PER_HOUR = 5

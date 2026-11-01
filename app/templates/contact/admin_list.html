@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}صندوق پیام | CyberSite{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/products.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/shop.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="store-admin shop-page">
+
+    <div class="store-header">
+        <div>
+            <p class="admin-label">CYBERSITE / INBOX</p>
+            <h1>صندوق پیام</h1>
+            <p>{{ unread_count }} پیام خوانده‌نشده</p>
+        </div>
+
+        <a class="store-button" href="{{ url_for('admin.index') }}">داشبورد</a>
+    </div>
+
+    {% include "components/flashes.html" %}
+
+    <nav class="status-filter" aria-label="فیلتر">
+        <a href="{{ url_for('contact.manage_messages') }}"
+           class="{{ 'active' if not unread_only }}">همه</a>
+        <a href="{{ url_for('contact.manage_messages', filter='unread') }}"
+           class="{{ 'active' if unread_only }}">خوانده‌نشده</a>
+    </nav>
+
+    <div class="products-panel">
+        <div class="product-table-wrap">
+            <table class="product-table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>نام</th>
+                        <th>موضوع</th>
+                        <th>ایمیل</th>
+                        <th>تاریخ (UTC)</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for item in messages %}
+                        <tr class="{{ 'row-unread' if not item.is_read }}">
+                            <td>
+                                {% if not item.is_read %}
+                                    <span class="status-badge">جدید</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ item.name }}</td>
+                            <td>{{ item.subject or "—" }}</td>
+                            <td dir="ltr">{{ item.email }}</td>
+                            <td dir="ltr">{{ item.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                <a href="{{ url_for('contact.manage_message_detail', message_id=item.id) }}">
+                                    مشاهده
+                                </a>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="6">پیامی وجود ندارد.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if pagination.pages > 1 %}
+        <nav class="pagination" aria-label="صفحه‌بندی">
+            {% if pagination.has_prev %}
+                <a href="{{ url_for('contact.manage_messages', page=pagination.prev_num, filter=('unread' if unread_only else None)) }}">قبلی</a>
+            {% endif %}
+
+            <span class="current">{{ pagination.page }} / {{ pagination.pages }}</span>
+
+            {% if pagination.has_next %}
+                <a href="{{ url_for('contact.manage_messages', page=pagination.next_num, filter=('unread' if unread_only else None)) }}">بعدی</a>
+            {% endif %}
+        </nav>
+    {% endif %}
+
+</section>
+{% endblock %}

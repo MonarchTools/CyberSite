@@ -43,6 +43,13 @@
             <p>مشاهده و پیگیری سفارش‌ها</p>
         </a>
 
+        <a href="{{ url_for('contact.manage_messages') }}"
+           class="dashboard-card">
+            <span>✉</span>
+            <h2>پیام‌ها{% if unread_messages %}<b class="card-badge">{{ unread_messages }}</b>{% endif %}</h2>
+            <p>صندوق پیام‌های فرم تماس</p>
+        </a>
+
         <a href="{{ url_for('blog.index') }}"
            class="dashboard-card">
             <span>▤</span>

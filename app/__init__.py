@@ -2,16 +2,21 @@
 from app.modules.home.models import SiteSetting
 from app.modules.admin.models import Admin
 from app.modules.shop.models import Order, OrderItem
+from app.modules.contact.models import ContactMessage
 from pathlib import Path
 from flask import Flask
 
 from config import Config
 from app.extensions import db, login_manager, csrf
+from app.security import ensure_secret_key, init_security
 
 
 def create_app(config_class=Config):
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(config_class)
+
+    ensure_secret_key(app)
+    init_security(app)
 
     Path(app.instance_path).mkdir(parents=True, exist_ok=True)
 
@@ -20,6 +25,7 @@ def create_app(config_class=Config):
     csrf.init_app(app)
 
     login_manager.login_view = "admin.login"
+    login_manager.session_protection = "strong"
     login_manager.login_message = "برای دسترسی ابتدا وارد شوید."
     login_manager.login_message_category = "warning"
 
