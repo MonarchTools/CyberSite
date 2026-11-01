@@ -16,8 +16,10 @@ body {
     pointer-events: none;
 
     background-image:
+        radial-gradient(circle at 100% 18%, var(--glow), transparent 28%),
+        radial-gradient(circle at 0% 88%, var(--glow), transparent 30%),
         linear-gradient(var(--grid-line) 1px, transparent 1px),
         linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
 
-    background-size: 45px 45px;
+    background-size: auto, auto, 45px 45px, 45px 45px;
 }

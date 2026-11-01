@@ -8,6 +8,7 @@ from flask import (
 )
 from flask_login import login_required
 
+from app.notifications import notify_new_message
 from app.extensions import db
 from app.modules.admin.captcha import create_challenge, verify_challenge
 from app.modules.admin.throttle import client_ip
@@ -82,17 +83,19 @@ def index():
             form.captcha.data = ""
             return render_template("contact/index.html", form=form)
 
-        db.session.add(
-            ContactMessage(
-                name=form.name.data,
-                email=form.email.data,
-                phone=form.phone.data or None,
-                subject=form.subject.data or None,
-                message=form.message.data,
-                ip_hash=ip_hash,
-            )
+        saved = ContactMessage(
+            name=form.name.data,
+            email=form.email.data,
+            phone=form.phone.data or None,
+            subject=form.subject.data or None,
+            message=form.message.data,
+            ip_hash=ip_hash,
         )
+        db.session.add(saved)
         db.session.commit()
+
+        # بعد از ذخیره؛ خطای ایمیل هرگز پیام ذخیره‌شده را خراب نمی‌کند
+        notify_new_message(saved)
 
         flash("پیام شما ارسال شد. سپاس!", "success")
         return redirect(url_for("contact.index"))

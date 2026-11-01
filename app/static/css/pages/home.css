@@ -98,7 +98,7 @@
 }
 
 .terminal-blue {
-    color: #4FD8FF;
+    color: var(--terminal-accent);
 }
 
 .terminal-success {
@@ -107,7 +107,7 @@
 
 .cursor {
     animation: blink 1s infinite;
-    color: #4FD8FF;
+    color: var(--terminal-accent);
 }
 
 @keyframes blink {

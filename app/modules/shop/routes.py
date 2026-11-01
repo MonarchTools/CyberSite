@@ -6,9 +6,9 @@ from flask_login import login_required
 
 from app.extensions import db
 from app.modules.products.models import Product
-from app.modules.shop.forms import CheckoutForm
+from app.modules.shop.forms import CheckoutForm, FulfillmentForm
 from app.modules.shop.gateways import GatewayError, get_gateway
-from app.modules.shop.models import Order, OrderStatus
+from app.modules.shop.models import Fulfillment, Order, OrderStatus
 from app.modules.shop.services import (
     PENDING_ORDER_KEY,
     add_to_cart,
@@ -22,7 +22,9 @@ from app.modules.shop.services import (
     remove_from_cart,
     set_cart_quantity,
 )
+from app.notifications import notify_fulfillment_change
 from app.utils import to_latin_digits
+from datetime import datetime, timezone
 
 
 shop_bp = Blueprint(
@@ -236,6 +238,7 @@ def order_detail(code):
     return render_template(
         "shop/order.html",
         order=order,
+        fulfillments=Fulfillment,
         can_recheck=(
             order.status in (OrderStatus.PENDING, OrderStatus.EXPIRED)
             and bool(order.authority)
@@ -315,7 +318,13 @@ def manage_orders():
 
     query = Order.query
 
-    if status in OrderStatus.ALL:
+    # فیلتر مرحلهٔ ارسال (مثل «ship:new»)؛ فقط سفارش‌های پرداخت‌شده
+    if status.startswith("ship:") and status[5:] in Fulfillment.ALL:
+        query = query.filter(
+            Order.status == OrderStatus.PAID,
+            Order.fulfillment == status[5:]
+        )
+    elif status in OrderStatus.ALL:
         query = query.filter(Order.status == status)
     else:
         status = ""
@@ -331,7 +340,8 @@ def manage_orders():
         pagination=pagination,
         orders=pagination.items,
         current_status=status,
-        statuses=OrderStatus
+        statuses=OrderStatus,
+        fulfillments=Fulfillment
     )
 
 
@@ -343,4 +353,60 @@ def manage_order_detail(order_id):
     if order is None:
         abort(404)
 
-    return render_template("shop/admin_order_detail.html", order=order)
+    form = FulfillmentForm(data={
+        "fulfillment": order.fulfillment,
+        "tracking_code": order.tracking_code,
+        "admin_note": order.admin_note,
+    })
+
+    return render_template(
+        "shop/admin_order_detail.html", order=order, form=form
+    )
+
+
+@shop_bp.route("/manage/orders/<int:order_id>/fulfillment", methods=["POST"])
+@login_required
+def update_fulfillment(order_id):
+    order = db.session.get(Order, order_id)
+
+    if order is None:
+        abort(404)
+
+    if order.status != OrderStatus.PAID:
+        flash("مرحلهٔ ارسال فقط برای سفارش‌های پرداخت‌شده قابل تغییر است.", "danger")
+        return redirect(url_for("shop.manage_order_detail", order_id=order.id))
+
+    form = FulfillmentForm()
+
+    if not form.validate_on_submit():
+        flash("اطلاعات واردشده معتبر نیست.", "danger")
+        return render_template(
+            "shop/admin_order_detail.html", order=order, form=form
+        ), 400
+
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    stage = form.fulfillment.data
+
+    changed = stage != order.fulfillment
+    order.fulfillment = stage
+    order.tracking_code = form.tracking_code.data or None
+    order.admin_note = form.admin_note.data or None
+
+    # زمان‌ها فقط وقتی به مرحله می‌رسیم ثبت می‌شوند و با برگشت پاک می‌شوند
+    if stage in (Fulfillment.SHIPPED, Fulfillment.DELIVERED):
+        order.shipped_at = order.shipped_at or now
+    else:
+        order.shipped_at = None
+
+    if stage == Fulfillment.DELIVERED:
+        order.delivered_at = order.delivered_at or now
+    else:
+        order.delivered_at = None
+
+    db.session.commit()
+
+    if changed:
+        notify_fulfillment_change(order)
+
+    flash("وضعیت سفارش به‌روزرسانی شد.", "success")
+    return redirect(url_for("shop.manage_order_detail", order_id=order.id))

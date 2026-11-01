@@ -405,3 +405,120 @@
         margin-bottom: 10px;
     }
 }
+
+/* ---------- مراحل ارسال ---------- */
+
+.status-processing {
+    background: var(--code-bg);
+    color: var(--blue-neon);
+}
+
+.status-shipped {
+    background: rgba(99, 102, 241, .16);
+    color: var(--shipped-text);
+}
+
+.status-delivered {
+    background: var(--success-bg);
+    color: var(--success-text);
+}
+
+.status-new {
+    background: var(--warning-bg);
+    color: var(--warning-text);
+}
+
+.order-steps {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    list-style: none;
+    margin: 0 0 8px;
+    padding: 0;
+    counter-reset: step;
+}
+
+.order-steps li {
+    flex: 1;
+    position: relative;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    padding-top: 30px;
+}
+
+.order-steps li::before {
+    content: "";
+    position: absolute;
+    top: 9px;
+    right: -50%;
+    width: 100%;
+    height: 2px;
+    background: var(--border-color);
+}
+
+.order-steps li:first-child::before {
+    display: none;
+}
+
+.order-steps li.done::before {
+    background: var(--blue-primary);
+}
+
+.order-steps .step-dot {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--surface-2);
+    border: 2px solid var(--border-strong);
+    z-index: 1;
+}
+
+.order-steps li.done {
+    color: var(--text);
+}
+
+.order-steps li.done .step-dot {
+    background: var(--blue-primary);
+    border-color: var(--blue-primary);
+}
+
+.order-steps li.current {
+    font-weight: bold;
+    color: var(--blue-neon);
+}
+
+.tracking-line {
+    margin: 16px 0 0;
+    color: var(--text);
+}
+
+.card-title {
+    font-size: 18px;
+    margin-bottom: 14px;
+}
+
+.field-error {
+    display: block;
+    margin-top: 6px;
+    color: var(--danger-text);
+    font-size: 13px;
+}
+
+@media (max-width: 550px) {
+    .order-steps li {
+        font-size: 11px;
+    }
+}
+
+.shop-card form .store-button {
+    margin-top: 10px;
+}
+
+.shop-card form + .order-meta {
+    margin-top: 24px;
+}

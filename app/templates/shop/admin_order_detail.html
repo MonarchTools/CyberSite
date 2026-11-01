@@ -20,10 +20,12 @@
             <h1>سفارش {{ order.id }}</h1>
         </div>
 
-        <span class="status-badge status-{{ order.status }}">
-            {{ order.status_label }}
+        <span class="status-badge status-{{ order.display_status }}">
+            {{ order.display_label }}
         </span>
     </div>
+
+    {% include "components/flashes.html" %}
 
     <div class="shop-card">
         <dl class="order-meta">
@@ -95,6 +97,53 @@
             </div>
         </div>
     </div>
+
+    {% if order.status == 'paid' %}
+        <div class="shop-card">
+            <h2 class="card-title">مرحلهٔ ارسال</h2>
+
+            <form method="POST"
+                  action="{{ url_for('shop.update_fulfillment', order_id=order.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="admin-form-group">
+                    <label for="fulfillment">مرحله</label>
+                    {{ form.fulfillment(class="admin-input") }}
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="tracking_code">کد رهگیری (برای مشتری نمایش داده می‌شود)</label>
+                    {{ form.tracking_code(class="admin-input", dir="ltr", maxlength="64") }}
+                    {% for error in form.tracking_code.errors %}
+                        <span class="field-error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="admin_note">یادداشت داخلی (فقط برای شما)</label>
+                    {{ form.admin_note(class="admin-input", rows="3", maxlength="1000") }}
+                    {% for error in form.admin_note.errors %}
+                        <span class="field-error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+
+                <button class="store-button" type="submit">ذخیرهٔ وضعیت</button>
+            </form>
+
+            {% if order.shipped_at or order.delivered_at %}
+                <dl class="order-meta">
+                    {% if order.shipped_at %}
+                        <dt>زمان ارسال (UTC)</dt>
+                        <dd dir="ltr">{{ order.shipped_at.strftime('%Y-%m-%d %H:%M') }}</dd>
+                    {% endif %}
+                    {% if order.delivered_at %}
+                        <dt>زمان تحویل (UTC)</dt>
+                        <dd dir="ltr">{{ order.delivered_at.strftime('%Y-%m-%d %H:%M') }}</dd>
+                    {% endif %}
+                </dl>
+            {% endif %}
+        </div>
+    {% endif %}
 
     <a class="admin-back" href="{{ url_for('shop.manage_orders') }}">
         بازگشت به سفارش‌ها

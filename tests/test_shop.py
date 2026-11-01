@@ -370,3 +370,207 @@ def test_navbar_links_to_cart(client):
     html = client.get("/").get_data(as_text=True)
 
     assert re.search(r'href="/shop/cart"', html)
+
+
+# ------------------------------------------------------------ وضعیت ارسال
+
+PASSWORD = "a-very-long-password-123"
+
+
+def make_admin(app):
+    from app.modules.admin.models import Admin
+
+    with app.app_context():
+        admin = Admin(username="owner")
+        admin.set_password(PASSWORD)
+        db.session.add(admin)
+        db.session.commit()
+
+
+def admin_client(app, monkeypatch):
+    from app.modules.admin import captcha as captcha_module
+
+    monkeypatch.setattr(captcha_module, "_random_text", lambda: "ABCDE")
+    make_admin(app)
+
+    admin = app.test_client()
+    admin.get("/admin/captcha.png")
+    admin.post(
+        "/admin/login",
+        data={"username": "owner", "password": PASSWORD, "captcha": "ABCDE"},
+    )
+
+    return admin
+
+
+def paid_order(app, client):
+    response = start_checkout(app, client)
+    response = client.post(response.headers["Location"], data={"result": "ok"})
+
+    with app.app_context():
+        order = Order.query.one()
+        assert order.status == OrderStatus.PAID
+        return order.id, order.public_code
+
+
+def set_stage(admin, order_id, stage, **extra):
+    return admin.post(
+        f"/shop/manage/orders/{order_id}/fulfillment",
+        data={"fulfillment": stage, **extra},
+    )
+
+
+def test_new_paid_order_starts_as_new(app, client):
+    order_id, code = paid_order(app, client)
+
+    with app.app_context():
+        assert Order.query.one().fulfillment == "new"
+
+    assert "در انتظار پردازش" in client.get(f"/shop/order/{code}").get_data(as_text=True)
+
+
+def test_fulfillment_update_requires_login_and_post(app, client):
+    order_id, _ = paid_order(app, client)
+
+    response = set_stage(client, order_id, "shipped")
+
+    assert response.status_code == 302
+    assert "/admin/login" in response.headers["Location"]
+
+    with app.app_context():
+        assert Order.query.one().fulfillment == "new"
+
+
+def test_admin_moves_order_through_stages(app, client, monkeypatch):
+    order_id, code = paid_order(app, client)
+    admin = admin_client(app, monkeypatch)
+
+    assert set_stage(admin, order_id, "processing").status_code == 302
+
+    with app.app_context():
+        order = Order.query.one()
+        assert order.fulfillment == "processing"
+        assert order.shipped_at is None
+
+    set_stage(admin, order_id, "shipped", tracking_code="RX 123-456",
+              admin_note="تماس گرفته شد")
+
+    with app.app_context():
+        order = Order.query.one()
+        assert order.fulfillment == "shipped"
+        assert order.tracking_code == "RX 123-456"
+        assert order.shipped_at is not None
+        assert order.delivered_at is None
+
+    set_stage(admin, order_id, "delivered", tracking_code="RX 123-456")
+
+    with app.app_context():
+        order = Order.query.one()
+        assert order.fulfillment == "delivered"
+        assert order.delivered_at is not None
+
+    # برگشت به مرحلهٔ قبل زمان‌های بعدی را پاک می‌کند
+    set_stage(admin, order_id, "processing")
+
+    with app.app_context():
+        order = Order.query.one()
+        assert order.shipped_at is None and order.delivered_at is None
+
+
+def test_customer_sees_stage_and_tracking_but_not_admin_note(app, client, monkeypatch):
+    order_id, code = paid_order(app, client)
+    admin = admin_client(app, monkeypatch)
+
+    set_stage(admin, order_id, "shipped", tracking_code="TRK-9988",
+              admin_note="یادداشت خیلی محرمانه")
+
+    html = client.get(f"/shop/order/{code}").get_data(as_text=True)
+
+    assert "ارسال‌شده" in html
+    assert "TRK-9988" in html
+    assert "یادداشت خیلی محرمانه" not in html
+
+
+def test_invalid_stage_and_tracking_are_rejected(app, client, monkeypatch):
+    order_id, _ = paid_order(app, client)
+    admin = admin_client(app, monkeypatch)
+
+    assert set_stage(admin, order_id, "hacked").status_code == 400
+    assert set_stage(admin, order_id, "shipped",
+                     tracking_code="<script>x</script>").status_code == 400
+    assert set_stage(admin, order_id, "shipped",
+                     tracking_code="A" * 65).status_code == 400
+
+    with app.app_context():
+        assert Order.query.one().fulfillment == "new"
+
+
+def test_unpaid_order_cannot_be_shipped(app, client, monkeypatch):
+    start_checkout(app, client)  # پرداخت نشده
+    admin = admin_client(app, monkeypatch)
+
+    response = set_stage(admin, 1, "shipped")
+
+    assert response.status_code == 302
+
+    with app.app_context():
+        order = Order.query.one()
+        assert order.status == OrderStatus.PENDING
+        assert order.fulfillment == "new"
+
+
+def test_unknown_order_is_404(app, monkeypatch):
+    admin = admin_client(app, monkeypatch)
+
+    assert set_stage(admin, 999, "shipped").status_code == 404
+
+
+def test_admin_list_filter_and_dashboard_badge(app, client, monkeypatch):
+    order_id, _ = paid_order(app, client)
+    admin = admin_client(app, monkeypatch)
+
+    assert 'class="card-badge">1<' in admin.get("/admin/").get_data(as_text=True)
+
+    html = admin.get("/shop/manage/orders?status=ship:new").get_data(as_text=True)
+    assert "در انتظار پردازش" in html and "09123456789" in html
+
+    set_stage(admin, order_id, "shipped")
+
+    assert "card-badge" not in admin.get("/admin/").get_data(as_text=True)
+
+    html = admin.get("/shop/manage/orders?status=ship:new").get_data(as_text=True)
+    assert "09123456789" not in html
+
+    html = admin.get("/shop/manage/orders?status=ship:shipped").get_data(as_text=True)
+    assert "09123456789" in html
+
+
+def test_upgrade_adds_order_columns(app):
+    from sqlalchemy import text
+    from app.db_upgrade import upgrade_schema
+
+    with app.app_context():
+        db.session.remove()
+
+        with db.engine.begin() as connection:
+            connection.execute(text("DROP TABLE order_items"))
+            connection.execute(text("DROP TABLE orders"))
+            connection.execute(text(
+                "CREATE TABLE orders (id INTEGER PRIMARY KEY, public_code VARCHAR(32), "
+                "status VARCHAR(20), total_rial BIGINT)"
+            ))
+            connection.execute(text(
+                "INSERT INTO orders (id, public_code, status, total_rial) "
+                "VALUES (1, 'x', 'paid', 100)"
+            ))
+
+        added = upgrade_schema()
+
+        assert "orders.fulfillment" in added
+        assert "orders.tracking_code" in added
+
+        with db.engine.connect() as connection:
+            row = connection.execute(text("SELECT fulfillment FROM orders")).one()
+            assert row[0] == "new"
+
+        assert upgrade_schema() == []

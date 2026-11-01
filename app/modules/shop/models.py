@@ -20,6 +20,24 @@ class OrderStatus:
     }
 
 
+class Fulfillment:
+    """مرحلهٔ آماده‌سازی و ارسال؛ فقط برای سفارش‌های پرداخت‌شده معنا دارد."""
+
+    NEW = "new"                # پرداخت شده، هنوز بررسی نشده
+    PROCESSING = "processing"  # در حال آماده‌سازی
+    SHIPPED = "shipped"        # تحویل پست/پیک شده
+    DELIVERED = "delivered"    # به مشتری رسیده
+
+    ALL = (NEW, PROCESSING, SHIPPED, DELIVERED)
+
+    LABELS = {
+        NEW: "در انتظار پردازش",
+        PROCESSING: "در حال آماده‌سازی",
+        SHIPPED: "ارسال‌شده",
+        DELIVERED: "تحویل‌شده",
+    }
+
+
 def _utcnow():
     return datetime.now(timezone.utc)
 
@@ -68,6 +86,20 @@ class Order(db.Model):
     )
     paid_at = db.Column(db.DateTime, nullable=True)
 
+    fulfillment = db.Column(
+        db.String(20),
+        nullable=False,
+        default=Fulfillment.NEW,
+        server_default=Fulfillment.NEW,
+        index=True
+    )
+    tracking_code = db.Column(db.String(64), nullable=True)
+    shipped_at = db.Column(db.DateTime, nullable=True)
+    delivered_at = db.Column(db.DateTime, nullable=True)
+
+    # یادداشت داخلی مدیر؛ هرگز به مشتری نشان داده نمی‌شود
+    admin_note = db.Column(db.Text, nullable=True)
+
     items = db.relationship(
         "OrderItem",
         back_populates="order",
@@ -78,6 +110,19 @@ class Order(db.Model):
     @property
     def status_label(self):
         return OrderStatus.LABELS.get(self.status, self.status)
+
+    @property
+    def display_status(self):
+        """کلید وضعیتی که به کاربر نشان داده می‌شود (پس از پرداخت: مرحلهٔ ارسال)."""
+        if self.status == OrderStatus.PAID:
+            return self.fulfillment
+        return self.status
+
+    @property
+    def display_label(self):
+        if self.status == OrderStatus.PAID:
+            return Fulfillment.LABELS.get(self.fulfillment, self.fulfillment)
+        return self.status_label
 
 
 class OrderItem(db.Model):

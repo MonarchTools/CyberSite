@@ -63,5 +63,19 @@ class Config:
     # فقط وقتی مقدار بدهید که واقعاً پشت پروکسی هستید؛ وگرنه IP قابل جعل می‌شود.
     TRUSTED_PROXY_COUNT = int(os.getenv("TRUSTED_PROXY_COUNT", "0") or 0)
 
+    # --- اعلان ایمیلی ---
+    # اگر MAIL_SERVER یا MAIL_FROM خالی باشد، هیچ ایمیلی فرستاده نمی‌شود.
+    MAIL_SERVER = os.getenv("MAIL_SERVER", "")
+    MAIL_PORT = int(os.getenv("MAIL_PORT", "587") or 587)
+    MAIL_USERNAME = os.getenv("MAIL_USERNAME", "")
+    MAIL_PASSWORD = os.getenv("MAIL_PASSWORD", "")
+    # starttls (پورت 587)، ssl (پورت 465) یا none
+    MAIL_SECURITY = os.getenv("MAIL_SECURITY", "starttls")
+    MAIL_FROM = os.getenv("MAIL_FROM", "") or os.getenv("MAIL_USERNAME", "")
+    # ایمیلی که اعلان سفارش و پیام جدید را می‌گیرد
+    ADMIN_NOTIFY_EMAIL = os.getenv("ADMIN_NOTIFY_EMAIL", "")
+    MAIL_ASYNC = True
+    MAIL_TIMEOUT = 10
+
     # حداکثر پیام فرم تماس از هر IP در یک ساعت
     CONTACT_MAX_PER_HOUR = 5

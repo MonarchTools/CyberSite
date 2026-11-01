@@ -39,8 +39,8 @@
         <a href="{{ url_for('shop.manage_orders') }}"
            class="dashboard-card">
             <span>▣</span>
-            <h2>سفارش‌ها</h2>
-            <p>مشاهده و پیگیری سفارش‌ها</p>
+            <h2>سفارش‌ها{% if new_orders %}<b class="card-badge">{{ new_orders }}</b>{% endif %}</h2>
+            <p>پیگیری پرداخت و ارسال سفارش‌ها</p>
         </a>
 
         <a href="{{ url_for('contact.manage_messages') }}"

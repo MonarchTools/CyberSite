@@ -14,6 +14,11 @@ from app.extensions import db
 # (جدول، ستون، نوع SQL)
 ADDED_COLUMNS = (
     ("posts", "cover_image", "VARCHAR(64)"),
+    ("orders", "fulfillment", "VARCHAR(20) NOT NULL DEFAULT 'new'"),
+    ("orders", "tracking_code", "VARCHAR(64)"),
+    ("orders", "shipped_at", "DATETIME"),
+    ("orders", "delivered_at", "DATETIME"),
+    ("orders", "admin_note", "TEXT"),
 )
 
 

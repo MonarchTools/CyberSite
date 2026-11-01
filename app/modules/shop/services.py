@@ -6,6 +6,7 @@ from datetime import timedelta
 from flask import current_app, session
 from sqlalchemy import update
 
+from app.notifications import notify_order_paid
 from app.extensions import db
 from app.modules.products.models import Product
 from app.modules.shop.gateways import GatewayError
@@ -266,11 +267,17 @@ def finalize_payment(order, gateway, status_param, *, recheck=False):
     - ``recheck=True``: رد شدن پرداخت از سوی درگاه سفارش را ناموفق نمی‌کند
       (ممکن است مشتری هنوز در صفحهٔ درگاه باشد).
     """
+    order._just_paid = False
+
     try:
         return _finalize(order, gateway, status_param, recheck)
     finally:
         db.session.commit()
         db.session.refresh(order)
+
+        # فقط درخواستی که واقعاً وضعیت را به «پرداخت‌شده» برده ایمیل می‌فرستد
+        if order._just_paid:
+            notify_order_paid(order)
 
 
 def _finalize(order, gateway, status_param, recheck):
@@ -318,7 +325,7 @@ def _finalize(order, gateway, status_param, recheck):
         fail_order(order)
         return "danger", f"پرداخت تأیید نشد: {error}"
 
-    _transition(
+    order._just_paid = _transition(
         order,
         OrderStatus.PENDING,
         OrderStatus.PAID,

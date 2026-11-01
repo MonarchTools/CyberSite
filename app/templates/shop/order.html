@@ -20,12 +20,34 @@
             <h1>سفارش شمارهٔ {{ order.id }}</h1>
         </div>
 
-        <span class="status-badge status-{{ order.status }}">
-            {{ order.status_label }}
+        <span class="status-badge status-{{ order.display_status }}">
+            {{ order.display_label }}
         </span>
     </div>
 
     {% include "components/flashes.html" %}
+
+    {% if order.status == 'paid' %}
+        <div class="shop-card">
+            <ol class="order-steps" aria-label="مراحل سفارش">
+                {% set ns = namespace(reached=true) %}
+                {% for key in fulfillments.ALL %}
+                    <li class="{{ 'done' if ns.reached }}{{ ' current' if key == order.fulfillment }}">
+                        <span class="step-dot"></span>
+                        {{ fulfillments.LABELS[key] }}
+                    </li>
+                    {% if key == order.fulfillment %}{% set ns.reached = false %}{% endif %}
+                {% endfor %}
+            </ol>
+
+            {% if order.tracking_code %}
+                <p class="tracking-line">
+                    کد رهگیری مرسوله:
+                    <strong dir="ltr">{{ order.tracking_code }}</strong>
+                </p>
+            {% endif %}
+        </div>
+    {% endif %}
 
     <div class="shop-card">
         <div class="product-table-wrap">

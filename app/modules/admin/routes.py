@@ -12,6 +12,7 @@ from app.modules.admin.captcha import create_challenge, verify_challenge
 from app.modules.admin.forms import LoginForm
 from app.modules.admin.models import Admin
 from app.modules.contact.models import ContactMessage
+from app.modules.shop.models import Fulfillment, Order, OrderStatus
 from app.modules.admin.throttle import (
     lock_remaining,
     register_failure,
@@ -37,10 +38,16 @@ def index():
         ContactMessage.is_read.is_(False)
     ).count()
 
+    new_orders = Order.query.filter(
+        Order.status == OrderStatus.PAID,
+        Order.fulfillment == Fulfillment.NEW
+    ).count()
+
     return render_template(
         "admin/dashboard.html",
         admin=current_user,
-        unread_messages=unread_messages
+        unread_messages=unread_messages,
+        new_orders=new_orders
     )
 
 

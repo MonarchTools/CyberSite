@@ -37,6 +37,13 @@
                 {{ statuses.LABELS[key] }}
             </a>
         {% endfor %}
+
+        {% for key in fulfillments.ALL %}
+            <a href="{{ url_for('shop.manage_orders', status='ship:' ~ key) }}"
+               class="{{ 'active' if current_status == 'ship:' ~ key }}">
+                {{ fulfillments.LABELS[key] }}
+            </a>
+        {% endfor %}
     </nav>
 
     <div class="products-panel">
@@ -62,8 +69,8 @@
                             <td dir="ltr">{{ order.phone }}</td>
                             <td>{{ order.total_rial|rial }}</td>
                             <td>
-                                <span class="status-badge status-{{ order.status }}">
-                                    {{ order.status_label }}
+                                <span class="status-badge status-{{ order.display_status }}">
+                                    {{ order.display_label }}
                                 </span>
                             </td>
                             <td dir="ltr">{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</td>

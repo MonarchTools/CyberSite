@@ -1,8 +1,8 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, SubmitField
+from wtforms import SelectField, StringField, TextAreaField, SubmitField
 from wtforms.validators import DataRequired, Length, Optional, Regexp
 
-from app.utils import normalize_mobile
+from app.utils import normalize_mobile, to_latin_digits
 
 
 def _strip(value):
@@ -48,3 +48,40 @@ class CheckoutForm(FlaskForm):
     )
 
     submit = SubmitField("ادامه و پرداخت")
+
+
+class FulfillmentForm(FlaskForm):
+    """تغییر مرحلهٔ ارسال توسط مدیر."""
+
+    fulfillment = SelectField(
+        "مرحله",
+        choices=[],
+        validators=[DataRequired()]
+    )
+
+    tracking_code = StringField(
+        "کد رهگیری",
+        filters=[lambda v: to_latin_digits(v.strip()) if isinstance(v, str) else v],
+        validators=[
+            Optional(),
+            Length(max=64),
+            Regexp(
+                r"^[A-Za-z0-9\-_/. ]+$",
+                message="کد رهگیری فقط می‌تواند حروف انگلیسی، عدد و - _ / . باشد."
+            )
+        ]
+    )
+
+    admin_note = TextAreaField(
+        "یادداشت داخلی",
+        filters=[_strip],
+        validators=[Optional(), Length(max=1000)]
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from app.modules.shop.models import Fulfillment
+
+        self.fulfillment.choices = [
+            (key, Fulfillment.LABELS[key]) for key in Fulfillment.ALL
+        ]
