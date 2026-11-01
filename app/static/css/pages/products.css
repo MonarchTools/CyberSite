@@ -2,7 +2,7 @@
 .store-admin,
 .public-store {
     width: min(1100px, 92%);
-    margin: 60px auto;
+    margin: 48px auto 80px;
 }
 
 .store-header {
@@ -11,7 +11,7 @@
     align-items: center;
     gap: 20px;
     flex-wrap: wrap;
-    margin-bottom: 35px;
+    margin-bottom: 36px;
 }
 
 .store-header h1 {
@@ -19,26 +19,11 @@
     margin: 12px 0;
 }
 
-.store-button {
-    display: inline-block;
-    padding: 12px 20px;
-    border: 0;
-    border-radius: 9px;
-    background: #087CFF;
-    color: white;
-    cursor: pointer;
-    text-align: center;
-}
-
-.store-button:hover {
-    background: #0064d8;
-}
-
 .category-panel,
 .products-panel,
 .product-form-card {
     background: var(--panel);
-    border: 1px solid rgba(0, 174, 255, .2);
+    border: 1px solid var(--border-color);
     border-radius: 15px;
     padding: 25px;
     margin-bottom: 25px;
@@ -73,17 +58,10 @@
     align-items: center;
     gap: 12px;
     padding: 10px 14px;
-    background: #080D1B;
-    border: 1px solid rgba(0, 174, 255, .2);
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
     border-radius: 9px;
     color: var(--text);
-}
-
-.delete-button {
-    border: 0;
-    background: transparent;
-    color: #ff7185;
-    cursor: pointer;
 }
 
 .product-table-wrap {
@@ -101,7 +79,7 @@
 .product-table td {
     padding: 15px 12px;
     text-align: right;
-    border-bottom: 1px solid rgba(0, 174, 255, .12);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .product-table th {
@@ -163,8 +141,15 @@
 .public-product-card {
     overflow: hidden;
     background: var(--panel);
-    border: 1px solid rgba(0, 174, 255, .2);
+    border: 1px solid var(--border-color);
     border-radius: 15px;
+    transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
+}
+
+.public-product-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow);
 }
 
 .public-product-card img,
@@ -178,7 +163,7 @@
 .product-no-image {
     display: grid;
     place-items: center;
-    background: #101b32;
+    background: var(--surface-2);
     color: var(--cyan);
 }
 
@@ -215,11 +200,11 @@
 }
 
 .stock-available {
-    color: #38d9a9;
+    color: var(--success-text);
 }
 
 .stock-unavailable {
-    color: #ff7185;
+    color: var(--danger-text);
 }
 
 @media (max-width: 800px) {

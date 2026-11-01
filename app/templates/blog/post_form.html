@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} | CyberSite{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/products.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/shop.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/posts.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="product-form-page shop-page">
+
+    <div class="product-form-card">
+        <p class="admin-label">CYBERSITE / POST EDITOR</p>
+        <h1>{{ page_title }}</h1>
+
+        {% include "components/flashes.html" %}
+
+        <form method="POST" enctype="multipart/form-data" novalidate>
+            {{ form.hidden_tag() }}
+
+            <div class="admin-form-group">
+                {{ form.title.label }}
+                {{ form.title(class="admin-input", placeholder="عنوان پست") }}
+                {% for error in form.title.errors %}
+                    <small class="form-error">{{ error }}</small>
+                {% endfor %}
+            </div>
+
+            <div class="admin-form-group">
+                {{ form.slug.label }}
+                {{ form.slug(class="admin-input", placeholder="خالی بگذارید تا از عنوان ساخته شود", dir="ltr") }}
+                <small>آدرس پست: <span dir="ltr">/blog/{{ form.slug.data or "..." }}</span></small>
+                {% for error in form.slug.errors %}
+                    <small class="form-error">{{ error }}</small>
+                {% endfor %}
+            </div>
+
+            <div class="admin-form-group">
+                {{ form.excerpt.label }}
+                {{ form.excerpt(class="admin-input", rows="3", maxlength="300", placeholder="اگر خالی باشد از ابتدای متن ساخته می‌شود") }}
+                {% for error in form.excerpt.errors %}
+                    <small class="form-error">{{ error }}</small>
+                {% endfor %}
+            </div>
+
+            <div class="admin-form-group">
+                {{ form.cover.label }}
+                {{ form.cover(class="admin-input", accept="image/png,image/jpeg,image/webp") }}
+                <small>JPG، PNG یا WEBP، حداکثر ۵ مگابایت. تصویر بهینه و بدون اطلاعات جانبی ذخیره می‌شود.</small>
+                {% for error in form.cover.errors %}
+                    <small class="form-error">{{ error }}</small>
+                {% endfor %}
+
+                {% if post and post.cover_image %}
+                    <div class="cover-preview">
+                        <img src="{{ url_for('blog.cover_image', filename=post.cover_image) }}"
+                             alt="تصویر فعلی">
+                        <label class="filter-check">
+                            {{ form.remove_cover() }}
+                            {{ form.remove_cover.label.text }}
+                        </label>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="admin-form-group">
+                {{ form.body.label }}
+                {{ form.body(class="admin-input post-editor", rows="18") }}
+                {% for error in form.body.errors %}
+                    <small class="form-error">{{ error }}</small>
+                {% endfor %}
+
+                <details class="editor-help">
+                    <summary>راهنمای قالب‌بندی</summary>
+                    <pre dir="ltr">## عنوان بخش
+### زیرعنوان
+**پررنگ**   *مورب*   `کد`
+[متن لینک](https://example.com)
+- مورد لیست
+1. مورد شماره‌دار
+&gt; نقل‌قول
+```
+بلوک کد
+```</pre>
+                    <small>HTML مجاز نیست و به‌صورت متن نمایش داده می‌شود. لینک‌ها فقط http و https یا مسیر داخلی (/…).</small>
+                </details>
+            </div>
+
+            <label class="filter-check">
+                {{ form.is_published() }}
+                {{ form.is_published.label.text }}
+            </label>
+
+            {{ form.submit(class="store-button") }}
+        </form>
+
+        <a class="admin-back" href="{{ url_for('blog.manage_posts') }}">
+            بازگشت به مدیریت وبلاگ
+        </a>
+    </div>
+
+</section>
+{% endblock %}

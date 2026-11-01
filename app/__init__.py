@@ -3,12 +3,15 @@ from app.modules.home.models import SiteSetting
 from app.modules.admin.models import Admin
 from app.modules.shop.models import Order, OrderItem
 from app.modules.contact.models import ContactMessage
+from app.modules.blog.models import Post
 from pathlib import Path
 from flask import Flask
 
 from config import Config
 from app.extensions import db, login_manager, csrf
 from app.security import ensure_secret_key, init_security
+from app.db_upgrade import upgrade_schema
+from app.errors import register_error_handlers
 
 
 def create_app(config_class=Config):
@@ -17,6 +20,7 @@ def create_app(config_class=Config):
 
     ensure_secret_key(app)
     init_security(app)
+    register_error_handlers(app)
 
     Path(app.instance_path).mkdir(parents=True, exist_ok=True)
 
@@ -63,6 +67,7 @@ def create_app(config_class=Config):
 
     with app.app_context():
         db.create_all()
+        upgrade_schema()
 
         if not db.session.get(SiteSetting, 1):
             db.session.add(

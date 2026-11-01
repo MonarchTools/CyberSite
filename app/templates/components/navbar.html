@@ -16,8 +16,16 @@
         <a href="{{ url_for('contact.index') }}">تماس با من</a>
     </div>
 
-    <a href="{{ url_for('admin.index') }}" class="nav-login">
-        مدیریت
-    </a>
+    <div class="nav-actions">
+        <button class="theme-toggle" type="button" data-theme-toggle
+                aria-label="تغییر پوسته روشن/تیره" title="تغییر پوسته">
+            <span class="icon-sun" aria-hidden="true">☀</span>
+            <span class="icon-moon" aria-hidden="true">☾</span>
+        </button>
+
+        <a href="{{ url_for('admin.index') }}" class="nav-login">
+            مدیریت
+        </a>
+    </div>
 
 </nav>

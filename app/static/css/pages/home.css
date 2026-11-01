@@ -56,3 +56,60 @@
     font-size: 32px;
     color: var(--blue-neon);
 }
+.hero-terminal {
+    max-width: 650px;
+    margin: 60px auto 0;
+    text-align: right;
+    color: #EAF2FF;
+    background: var(--terminal-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 13px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+}
+
+.terminal-header {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 14px;
+    background: rgba(255, 255, 255, .06);
+}
+
+.terminal-header > span {
+    width: 10px;
+    height: 10px;
+    background: var(--blue-primary);
+    border-radius: 50%;
+}
+
+.terminal-header small {
+    margin-right: auto;
+    color: #B3C2DB;
+}
+
+.terminal-body {
+    padding: 23px;
+    font-family: Consolas, "Courier New", monospace;
+    direction: ltr;
+    text-align: left;
+    font-size: 13px;
+    line-height: 2.3;
+}
+
+.terminal-blue {
+    color: #4FD8FF;
+}
+
+.terminal-success {
+    color: #34D399;
+}
+
+.cursor {
+    animation: blink 1s infinite;
+    color: #4FD8FF;
+}
+
+@keyframes blink {
+    50% { opacity: 0; }
+}

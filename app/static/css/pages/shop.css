@@ -6,7 +6,7 @@
 
 .shop-card {
     background: var(--panel);
-    border: 1px solid rgba(0, 174, 255, .2);
+    border: 1px solid var(--border-color);
     border-radius: 15px;
     padding: 25px;
     margin-bottom: 25px;
@@ -98,18 +98,18 @@
     padding: 9px 13px;
     text-align: center;
     border-radius: 9px;
-    border: 1px solid rgba(0, 174, 255, .25);
+    border: 1px solid var(--border-color);
     color: var(--text);
 }
 
 .pagination a:hover {
-    background: rgba(0, 174, 255, .12);
+    background: var(--code-bg);
 }
 
 .pagination .current {
-    background: #087CFF;
-    border-color: #087CFF;
-    color: #fff;
+    background: var(--blue-primary);
+    border-color: var(--blue-primary);
+    color: var(--on-accent);
 }
 
 .pagination .gap {
@@ -145,7 +145,7 @@
     max-height: 480px;
     object-fit: cover;
     border-radius: 15px;
-    border: 1px solid rgba(0, 174, 255, .2);
+    border: 1px solid var(--border-color);
 }
 
 .product-no-image-large {
@@ -212,11 +212,6 @@
 
 /* ---------- سبد و ثبت سفارش ---------- */
 
-.store-button.small {
-    padding: 8px 12px;
-    font-size: 13px;
-}
-
 .qty-form {
     display: flex;
     align-items: center;
@@ -241,7 +236,7 @@
     flex-wrap: wrap;
     margin-top: 22px;
     padding-top: 18px;
-    border-top: 1px solid rgba(0, 174, 255, .15);
+    border-top: 1px solid var(--border-color);
     color: var(--text);
 }
 
@@ -276,7 +271,7 @@
     gap: 12px;
     padding: 9px 0;
     color: var(--muted);
-    border-bottom: 1px solid rgba(0, 174, 255, .1);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .cart-summary-total {
@@ -309,19 +304,19 @@
     padding: 6px 14px;
     border-radius: 20px;
     font-size: 13px;
-    background: rgba(255, 190, 50, .12);
-    color: #ffd16c;
+    background: var(--warning-bg);
+    color: var(--warning-text);
 }
 
 .status-paid {
-    background: rgba(0, 220, 150, .12);
-    color: #63e9b7;
+    background: var(--success-bg);
+    color: var(--success-text);
 }
 
 .status-failed,
 .status-expired {
-    background: rgba(255, 60, 80, .12);
-    color: #ff8795;
+    background: var(--danger-bg);
+    color: var(--danger-text);
 }
 
 .status-filter {
@@ -334,14 +329,14 @@
 .status-filter a {
     padding: 8px 14px;
     border-radius: 9px;
-    border: 1px solid rgba(0, 174, 255, .25);
+    border: 1px solid var(--border-color);
     color: var(--text);
 }
 
 .status-filter a.active {
-    background: #087CFF;
-    border-color: #087CFF;
-    color: #fff;
+    background: var(--blue-primary);
+    border-color: var(--blue-primary);
+    color: var(--on-accent);
 }
 
 .mock-pay {

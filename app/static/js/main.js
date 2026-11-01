@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-    console.log("CyberSite initialized successfully.");
+    
 
     document.documentElement.classList.add("js-ready");
 });
@@ -40,5 +40,26 @@ document.addEventListener("submit", (event) => {
 
     if (!window.confirm(form.dataset.confirm)) {
         event.preventDefault();
+    }
+});
+
+
+// تغییر پوسته روشن/تیره
+document.addEventListener("click", (event) => {
+    const toggle = event.target.closest("[data-theme-toggle]");
+
+    if (!toggle) {
+        return;
+    }
+
+    const root = document.documentElement;
+    const next = root.getAttribute("data-theme") === "light" ? "dark" : "light";
+
+    root.setAttribute("data-theme", next);
+
+    try {
+        window.localStorage.setItem("theme", next);
+    } catch (error) {
+        // ذخیره نشد؛ فقط برای همین صفحه اعمال می‌شود
     }
 });

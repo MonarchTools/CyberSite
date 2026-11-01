@@ -1,22 +1,30 @@
+/* ---------- ناوبری ---------- */
+
 .navbar {
     width: min(1180px, 92%);
-    margin: 24px auto;
-    padding: 17px 24px;
+    margin: var(--space-5) auto;
+    padding: 14px var(--space-5);
 
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: var(--space-4);
 
-    background: rgba(16, 27, 50, .85);
+    background: var(--nav-bg);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
+    box-shadow: var(--shadow);
 
     backdrop-filter: blur(18px);
 }
 
 .logo {
+    direction: ltr;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
     font-size: 22px;
-    font-weight: bold;
+    font-weight: 800;
 }
 
 .logo span {
@@ -26,77 +34,58 @@
 .nav-links {
     display: flex;
     align-items: center;
-    gap: 28px;
+    gap: var(--space-5);
     color: var(--text-secondary);
 }
 
 .nav-links a {
-    transition: var(--transition);
+    padding: 6px 2px;
+    border-bottom: 2px solid transparent;
+    transition: color var(--transition), border-color var(--transition);
 }
 
 .nav-links a:hover {
-    color: var(--blue-neon);
+    color: var(--text-primary);
+    border-bottom-color: var(--blue-neon);
 }
 
-.nav-login {
-    padding: 11px 20px;
-    border: 1px solid var(--blue-primary);
-    border-radius: var(--radius-sm);
-    transition: var(--transition);
-}
-
-.nav-login:hover {
-    background: var(--blue-primary);
-    box-shadow: var(--shadow-blue);
-}
-
-.btn-primary,
-.btn-secondary {
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    padding: 14px 24px;
-    border-radius: var(--radius-sm);
-    transition: var(--transition);
-}
-
-.btn-primary {
-    background: var(--blue-primary);
-    color: white;
-}
-
-.btn-primary:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-blue);
-}
-
-.btn-secondary {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-}
-
-.feature-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    padding: 28px;
-    transition: var(--transition);
-}
-
-.feature-card:hover {
-    transform: translateY(-6px);
-    border-color: var(--blue-neon);
-    box-shadow: var(--shadow-blue);
-}
-
-.footer {
-    padding: 28px;
-    border-top: 1px solid var(--border-color);
-    color: var(--text-secondary);
+.nav-actions {
     display: flex;
-    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-3);
 }
-/* سبد خرید در ناوبری */
+
+.theme-toggle {
+    width: 42px;
+    height: 42px;
+    display: inline-grid;
+    place-items: center;
+    padding: 0;
+    font-size: 18px;
+    line-height: 1;
+    color: var(--text-primary);
+    background: transparent;
+    border: 1px solid var(--border-strong);
+    border-radius: 50%;
+    transition: background-color var(--transition), border-color var(--transition);
+}
+
+.theme-toggle:hover {
+    background: var(--code-bg);
+    border-color: var(--blue-neon);
+}
+
+.theme-toggle:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+}
+
+/* در پوسته تیره آیکن خورشید (رفتن به روشن) و در پوسته روشن آیکن ماه نمایش داده می‌شود */
+:root:not([data-theme="light"]) .icon-moon,
+:root[data-theme="light"] .icon-sun {
+    display: none;
+}
+
 .nav-cart {
     display: inline-flex;
     align-items: center;
@@ -106,11 +95,204 @@
 .cart-badge {
     display: inline-block;
     min-width: 20px;
-    padding: 1px 6px;
+    padding: 0 6px;
     border-radius: 10px;
-    background: #087CFF;
-    color: #fff;
+    background: var(--blue-primary);
+    color: var(--on-accent);
     font-size: 12px;
-    line-height: 18px;
+    line-height: 20px;
     text-align: center;
+}
+
+/* ---------- سیستم یکپارچهٔ دکمه ---------- */
+
+.btn-primary,
+.btn-secondary,
+.store-button,
+.admin-submit,
+.logout-button,
+.nav-login,
+.captcha-refresh,
+.delete-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: 44px;
+    padding: 10px 22px;
+    font-weight: 600;
+    line-height: 1.4;
+    text-align: center;
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    transition:
+        background-color var(--transition),
+        border-color var(--transition),
+        color var(--transition),
+        box-shadow var(--transition),
+        transform var(--transition);
+}
+
+/* اصلی */
+.btn-primary,
+.store-button,
+.admin-submit,
+.logout-button {
+    color: var(--on-accent);
+    background: var(--blue-primary);
+}
+
+.btn-primary:hover,
+.store-button:hover,
+.admin-submit:hover,
+.logout-button:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-blue);
+}
+
+/* ثانویه */
+.btn-secondary,
+.nav-login,
+.captcha-refresh {
+    color: var(--text-primary);
+    background: transparent;
+    border-color: var(--border-strong);
+}
+
+.btn-secondary:hover,
+.nav-login:hover,
+.captcha-refresh:hover {
+    background: var(--code-bg);
+    border-color: var(--blue-neon);
+    transform: translateY(-1px);
+}
+
+/* خطرناک (حذف) */
+.delete-button {
+    min-height: 36px;
+    padding: 6px 14px;
+    color: var(--danger-text);
+    background: transparent;
+    border-color: transparent;
+}
+
+.delete-button:hover {
+    background: var(--danger-bg);
+    border-color: var(--danger-text);
+}
+
+/* کوچک */
+.store-button.small {
+    min-height: 36px;
+    padding: 6px 14px;
+    font-size: 14px;
+}
+
+.btn-primary:active,
+.store-button:active,
+.admin-submit:active,
+.logout-button:active,
+.btn-secondary:active,
+.nav-login:active,
+.captcha-refresh:active,
+.delete-button:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible,
+.store-button:focus-visible,
+.admin-submit:focus-visible,
+.logout-button:focus-visible,
+.nav-login:focus-visible,
+.captcha-refresh:focus-visible,
+.delete-button:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.store-button:disabled,
+.admin-submit:disabled,
+.logout-button:disabled,
+.captcha-refresh:disabled,
+.delete-button:disabled,
+.store-button[aria-disabled="true"] {
+    opacity: .55;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* ---------- صفحهٔ اصلی و اجزای عمومی ---------- */
+
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    font-size: 13px;
+    letter-spacing: 1px;
+    color: var(--blue-neon);
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    background: var(--code-bg);
+}
+
+.status-dot {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    margin-left: 8px;
+    border-radius: 50%;
+    background: var(--success-text);
+    box-shadow: 0 0 0 3px var(--success-bg);
+}
+
+.hero-badge .status-dot {
+    margin-left: 0;
+}
+
+.feature-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 28px;
+    transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
+}
+
+.feature-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--blue-neon);
+    box-shadow: var(--shadow-blue);
+}
+
+.placeholder-page {
+    text-align: center;
+    padding: 120px 10px;
+}
+
+.placeholder-page h1 {
+    margin: 30px 0 15px;
+}
+
+.placeholder-page p {
+    color: var(--text-secondary);
+    margin-bottom: 30px;
+}
+
+.footer {
+    margin-top: var(--space-7);
+    padding: 28px 5%;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-4);
+    flex-wrap: wrap;
 }

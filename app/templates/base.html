@@ -5,8 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta name="theme-color" content="#080D1B">
-    <meta name="description" content="CyberSite - Personal Cyber Platform">
+    <meta name="theme-color" content="#0F1A33">
+    <link rel="icon" type="image/svg+xml"
+          href="{{ url_for('static', filename='favicon.svg') }}">
+    <script src="{{ url_for('static', filename='js/theme-init.js') }}"></script>
+    <meta name="description" content="{% block meta_description %}CyberSite - Personal Cyber Platform{% endblock %}">
 
     <title>{% block title %}CyberSite{% endblock %}</title>
 

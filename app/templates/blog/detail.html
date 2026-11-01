@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}{{ post.title }} | CyberSite{% endblock %}
+
+{% block meta_description %}{{ post.summary }}{% endblock %}
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/products.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/shop.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/posts.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="public-store shop-page">
+
+    <nav class="breadcrumb" aria-label="مسیر">
+        <a href="{{ url_for('home.index') }}">خانه</a>
+        <span>/</span>
+        <a href="{{ url_for('blog.index') }}">وبلاگ</a>
+    </nav>
+
+    {% if not post.is_published %}
+        <div class="admin-alert warning draft-banner">
+            این پست پیش‌نویس است و فقط برای مدیر دیده می‌شود.
+        </div>
+    {% endif %}
+
+    <article class="post-article">
+        <p class="post-meta">
+            {{ (post.published_at or post.created_at).strftime('%Y-%m-%d') }}
+        </p>
+
+        <h1>{{ post.title }}</h1>
+
+        {% if post.cover_image %}
+            <figure class="post-cover">
+                <img src="{{ url_for('blog.cover_image', filename=post.cover_image) }}"
+                     alt="{{ post.title }}">
+            </figure>
+        {% endif %}
+
+        <div class="post-body">{{ post.body|post_body }}</div>
+
+        {% if current_user.is_authenticated %}
+            <p>
+                <a class="store-button small"
+                   href="{{ url_for('blog.edit_post', post_id=post.id) }}">
+                    ویرایش پست
+                </a>
+            </p>
+        {% endif %}
+    </article>
+
+    <a class="admin-back" href="{{ url_for('blog.index') }}">
+        بازگشت به وبلاگ
+    </a>
+
+</section>
+{% endblock %}
