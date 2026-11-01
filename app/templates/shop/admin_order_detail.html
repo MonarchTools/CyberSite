@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}سفارش {{ order.id }} | CyberSite{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/admin.css') }}">
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/products.css') }}">
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/shop.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="store-admin shop-page">
+
+    <div class="store-header">
+        <div>
+            <p class="admin-label">CYBERSITE / ORDER #{{ order.id }}</p>
+            <h1>سفارش {{ order.id }}</h1>
+        </div>
+
+        <span class="status-badge status-{{ order.status }}">
+            {{ order.status_label }}
+        </span>
+    </div>
+
+    <div class="shop-card">
+        <dl class="order-meta">
+            <dt>نام</dt>
+            <dd>{{ order.full_name }}</dd>
+
+            <dt>موبایل</dt>
+            <dd dir="ltr">{{ order.phone }}</dd>
+
+            {% if order.email %}
+                <dt>ایمیل</dt>
+                <dd dir="ltr">{{ order.email }}</dd>
+            {% endif %}
+
+            {% if order.note %}
+                <dt>توضیحات مشتری</dt>
+                <dd class="pre-line">{{ order.note }}</dd>
+            {% endif %}
+
+            <dt>درگاه</dt>
+            <dd>{{ order.gateway or "—" }}</dd>
+
+            {% if order.authority %}
+                <dt>Authority</dt>
+                <dd dir="ltr">{{ order.authority }}</dd>
+            {% endif %}
+
+            {% if order.ref_id %}
+                <dt>کد پیگیری</dt>
+                <dd dir="ltr">{{ order.ref_id }}</dd>
+            {% endif %}
+
+            <dt>ثبت (UTC)</dt>
+            <dd dir="ltr">{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</dd>
+
+            {% if order.paid_at %}
+                <dt>پرداخت (UTC)</dt>
+                <dd dir="ltr">{{ order.paid_at.strftime('%Y-%m-%d %H:%M') }}</dd>
+            {% endif %}
+        </dl>
+
+        <div class="product-table-wrap">
+            <table class="product-table">
+                <thead>
+                    <tr>
+                        <th>محصول</th>
+                        <th>قیمت واحد</th>
+                        <th>تعداد</th>
+                        <th>جمع</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items %}
+                        <tr>
+                            <td>{{ item.title }}</td>
+                            <td>{{ item.unit_price_rial|rial }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>{{ item.line_total_rial|rial }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="cart-summary">
+            <div>
+                <span>مبلغ سفارش</span>
+                <strong>{{ order.total_rial|rial }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <a class="admin-back" href="{{ url_for('shop.manage_orders') }}">
+        بازگشت به سفارش‌ها
+    </a>
+
+</section>
+{% endblock %}

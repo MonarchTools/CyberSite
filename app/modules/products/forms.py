@@ -4,13 +4,13 @@ from flask_wtf.file import FileField, FileAllowed
 from wtforms import (
     StringField,
     TextAreaField,
-    DecimalField,
     IntegerField,
     SelectField,
     SubmitField
 )
 from wtforms.validators import (
     DataRequired,
+    InputRequired,
     Length,
     NumberRange,
     Optional
@@ -31,12 +31,11 @@ class ProductForm(FlaskForm):
         validators=[Optional()]
     )
 
-    price = DecimalField(
-        "قیمت",
-        places=2,
+    price = IntegerField(
+        "قیمت (ریال)",
         validators=[
-            DataRequired(),
-            NumberRange(min=0)
+            InputRequired(),
+            NumberRange(min=0, max=1_000_000_000_000)
         ]
     )
 
@@ -44,8 +43,8 @@ class ProductForm(FlaskForm):
         "موجودی",
         default=0,
         validators=[
-            DataRequired(),
-            NumberRange(min=0)
+            InputRequired(),
+            NumberRange(min=0, max=1_000_000)
         ]
     )
 

@@ -19,4 +19,10 @@
         0 0 30px rgba(8, 124, 255, .15);
 
     --transition: .25s ease;
+
+    /* نام‌های کوتاهی که صفحات فروشگاه و مدیریت استفاده می‌کنند */
+    --panel: var(--bg-secondary);
+    --cyan: var(--blue-neon);
+    --text: var(--text-primary);
+    --muted: var(--text-secondary);
 }

@@ -196,3 +196,40 @@
         padding: 25px;
     }
 }
+
+/* Captcha */
+.captcha-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.captcha-image {
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    max-width: 100%;
+    height: auto;
+    background: #e8ecf4;
+}
+
+.captcha-refresh {
+    background: transparent;
+    color: inherit;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font: inherit;
+    cursor: pointer;
+}
+
+.captcha-refresh:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.captcha-input {
+    text-align: center;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+}

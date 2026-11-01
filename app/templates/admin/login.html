@@ -50,6 +50,35 @@
                 ) }}
             </div>
 
+            <div class="admin-form-group">
+                {{ form.captcha.label }}
+
+                <div class="captcha-box">
+                    <img src="{{ url_for('admin.captcha') }}"
+                         alt="تصویر کد امنیتی"
+                         width="200" height="70"
+                         class="captcha-image"
+                         data-captcha-image>
+
+                    <button type="button"
+                            class="captcha-refresh"
+                            data-captcha-refresh
+                            aria-label="دریافت کد امنیتی جدید">
+                        ↻ تصویر جدید
+                    </button>
+                </div>
+
+                {{ form.captcha(
+                    class="admin-input captcha-input",
+                    placeholder="کد داخل تصویر را وارد کنید",
+                    autocomplete="off",
+                    autocapitalize="characters",
+                    spellcheck="false",
+                    maxlength="9",
+                    dir="ltr"
+                ) }}
+            </div>
+
             {{ form.submit(class="admin-submit") }}
         </form>
 

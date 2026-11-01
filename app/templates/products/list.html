@@ -1,12 +1,26 @@
-﻿
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
 {% block title %}فروشگاه | CyberSite{% endblock %}
 
 {% block page_css %}
 <link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/admin.css') }}">
+<link rel="stylesheet"
       href="{{ url_for('static', filename='css/pages/products.css') }}">
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/shop.css') }}">
 {% endblock %}
+
+{% macro page_url(n) -%}
+{{ url_for(
+    'products.index',
+    page=(n if n > 1 else None),
+    q=(filters.q or None),
+    category=(filters.category or None),
+    sort=(filters.sort if filters.sort != 'newest' else None),
+    in_stock=(1 if filters.in_stock else None)
+) }}
+{%- endmacro %}
 
 {% block content %}
 <section class="public-store">
@@ -17,27 +31,96 @@
             <h1>فروشگاه</h1>
             <p>محصولات و خدمات دیجیتال</p>
         </div>
+
+        <a href="{{ url_for('shop.cart') }}" class="store-button">
+            سبد خرید{% if cart_item_count %} ({{ cart_item_count }}){% endif %}
+        </a>
     </div>
+
+    {% include "components/flashes.html" %}
+
+    {% set has_filters = filters.q or filters.category or filters.in_stock
+                         or filters.sort != 'newest' %}
+
+    <form method="GET"
+          action="{{ url_for('products.index') }}"
+          class="filter-bar">
+
+        <input class="admin-input"
+               type="search"
+               name="q"
+               value="{{ filters.q }}"
+               maxlength="80"
+               placeholder="جستجوی محصول…"
+               aria-label="جستجو">
+
+        <select class="admin-input" name="category" aria-label="دسته‌بندی">
+            <option value="">همهٔ دسته‌ها</option>
+            {% for category in categories %}
+                <option value="{{ category.id }}"
+                        {% if filters.category == category.id %}selected{% endif %}>
+                    {{ category.name }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <select class="admin-input" name="sort" aria-label="مرتب‌سازی">
+            {% for key, option in sort_options.items() %}
+                <option value="{{ key }}"
+                        {% if filters.sort == key %}selected{% endif %}>
+                    {{ option[0] }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <label class="filter-check">
+            <input type="checkbox" name="in_stock" value="1"
+                   {% if filters.in_stock %}checked{% endif %}>
+            فقط موجود
+        </label>
+
+        <button class="store-button" type="submit">اعمال</button>
+
+        {% if has_filters %}
+            <a class="filter-reset" href="{{ url_for('products.index') }}">
+                پاک‌کردن فیلترها
+            </a>
+        {% endif %}
+    </form>
+
+    <p class="result-count">
+        {{ pagination.total }} محصول
+    </p>
 
     <div class="public-product-grid">
         {% for product in products %}
             <article class="public-product-card">
 
-                {% if product.image_filename %}
-                    <img src="{{ url_for('products.product_image', filename=product.image_filename) }}"
-                         alt="{{ product.title }}">
-                {% else %}
-                    <div class="product-no-image">CYBER PRODUCT</div>
-                {% endif %}
+                <a class="product-card-link"
+                   href="{{ url_for('products.detail', product_id=product.id) }}">
+                    {% if product.image_filename %}
+                        <img src="{{ url_for('products.product_image', filename=product.image_filename) }}"
+                             alt="{{ product.title }}"
+                             loading="lazy">
+                    {% else %}
+                        <div class="product-no-image">CYBER PRODUCT</div>
+                    {% endif %}
+                </a>
 
                 <div class="public-product-content">
                     <small>{{ product.category.name }}</small>
-                    <h2>{{ product.title }}</h2>
-                    <p>{{ product.description or "توضیحاتی ثبت نشده است." }}</p>
 
-                    <strong>
-                        {{ "{:,.2f}".format(product.price) }}
-                    </strong>
+                    <h2>
+                        <a href="{{ url_for('products.detail', product_id=product.id) }}">
+                            {{ product.title }}
+                        </a>
+                    </h2>
+
+                    <p class="product-excerpt">
+                        {{ product.description or "توضیحاتی ثبت نشده است." }}
+                    </p>
+
+                    <strong>{{ product.price|rial }}</strong>
 
                     {% if product.stock > 0 %}
                         <span class="stock-available">موجود</span>
@@ -48,9 +131,41 @@
 
             </article>
         {% else %}
-            <p>هنوز محصولی در فروشگاه ثبت نشده است.</p>
+            <p class="empty-state">
+                {% if has_filters %}
+                    محصولی با این فیلترها پیدا نشد.
+                {% else %}
+                    هنوز محصولی در فروشگاه ثبت نشده است.
+                {% endif %}
+            </p>
         {% endfor %}
     </div>
+
+    {% if pagination.pages > 1 %}
+        <nav class="pagination" aria-label="صفحه‌بندی">
+            {% if pagination.has_prev %}
+                <a href="{{ page_url(pagination.prev_num) }}" rel="prev">قبلی</a>
+            {% endif %}
+
+            {% for number in pagination.iter_pages(
+                left_edge=1, right_edge=1, left_current=1, right_current=2
+            ) %}
+                {% if number %}
+                    {% if number == pagination.page %}
+                        <span class="current" aria-current="page">{{ number }}</span>
+                    {% else %}
+                        <a href="{{ page_url(number) }}">{{ number }}</a>
+                    {% endif %}
+                {% else %}
+                    <span class="gap">…</span>
+                {% endif %}
+            {% endfor %}
+
+            {% if pagination.has_next %}
+                <a href="{{ page_url(pagination.next_num) }}" rel="next">بعدی</a>
+            {% endif %}
+        </nav>
+    {% endif %}
 
 </section>
 {% endblock %}

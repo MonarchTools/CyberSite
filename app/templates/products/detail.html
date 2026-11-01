@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.title }} | CyberSite{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/admin.css') }}">
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/products.css') }}">
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/shop.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="public-store">
+
+    <nav class="breadcrumb" aria-label="مسیر">
+        <a href="{{ url_for('home.index') }}">خانه</a>
+        <span>/</span>
+        <a href="{{ url_for('products.index') }}">فروشگاه</a>
+        <span>/</span>
+        <a href="{{ url_for('products.index', category=product.category_id) }}">
+            {{ product.category.name }}
+        </a>
+    </nav>
+
+    {% include "components/flashes.html" %}
+
+    <article class="product-detail">
+
+        <div class="product-detail-media">
+            {% if product.image_filename %}
+                <img src="{{ url_for('products.product_image', filename=product.image_filename) }}"
+                     alt="{{ product.title }}">
+            {% else %}
+                <div class="product-no-image product-no-image-large">
+                    CYBER PRODUCT
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="product-detail-info">
+            <small class="product-category">{{ product.category.name }}</small>
+            <h1>{{ product.title }}</h1>
+
+            <p class="product-price">{{ product.price|rial }}</p>
+
+            {% if product.stock > 0 %}
+                <p class="stock-available">
+                    موجود
+                    {% if product.stock <= 5 %}
+                        — فقط {{ product.stock }} عدد باقی مانده
+                    {% endif %}
+                </p>
+
+                <form method="POST"
+                      action="{{ url_for('shop.cart_add', product_id=product.id) }}"
+                      class="add-to-cart-form">
+                    <input type="hidden" name="csrf_token"
+                           value="{{ csrf_token() }}">
+
+                    <label for="quantity">تعداد</label>
+                    <input class="admin-input qty-input"
+                           id="quantity"
+                           type="number"
+                           name="quantity"
+                           min="1"
+                           max="{{ max_quantity }}"
+                           value="1"
+                           inputmode="numeric">
+
+                    <button class="store-button" type="submit">
+                        افزودن به سبد خرید
+                    </button>
+                </form>
+            {% else %}
+                <p class="stock-unavailable">ناموجود</p>
+            {% endif %}
+
+            <div class="product-description">
+                <h2>توضیحات</h2>
+                <p>{{ product.description or "توضیحاتی ثبت نشده است." }}</p>
+            </div>
+        </div>
+
+    </article>
+
+    {% if related %}
+        <section class="related-products">
+            <h2>محصولات مرتبط</h2>
+
+            <div class="public-product-grid related-grid">
+                {% for item in related %}
+                    <article class="public-product-card">
+                        <a class="product-card-link"
+                           href="{{ url_for('products.detail', product_id=item.id) }}">
+                            {% if item.image_filename %}
+                                <img src="{{ url_for('products.product_image', filename=item.image_filename) }}"
+                                     alt="{{ item.title }}"
+                                     loading="lazy">
+                            {% else %}
+                                <div class="product-no-image">CYBER PRODUCT</div>
+                            {% endif %}
+                        </a>
+
+                        <div class="public-product-content">
+                            <h2>
+                                <a href="{{ url_for('products.detail', product_id=item.id) }}">
+                                    {{ item.title }}
+                                </a>
+                            </h2>
+                            <strong>{{ item.price|rial }}</strong>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+
+</section>
+{% endblock %}

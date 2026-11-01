@@ -9,6 +9,9 @@
     <div class="nav-links">
         <a href="{{ url_for('home.index') }}">خانه</a>
         <a href="{{ url_for('products.index') }}">فروشگاه</a>
+        <a href="{{ url_for('shop.cart') }}" class="nav-cart">
+            سبد خرید{% if cart_item_count %}<span class="cart-badge">{{ cart_item_count }}</span>{% endif %}
+        </a>
         <a href="{{ url_for('blog.index') }}">وبلاگ</a>
         <a href="{{ url_for('contact.index') }}">تماس با من</a>
     </div>

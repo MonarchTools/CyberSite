@@ -15,6 +15,8 @@ from flask_login import (
 
 from app.modules.admin.models import Admin
 from app.modules.admin.forms import LoginForm
+from app.modules.admin.captcha import create_challenge, verify_challenge
+from flask import Response
 
 
 admin_bp = Blueprint(
@@ -41,6 +43,12 @@ def login():
     form = LoginForm()
 
     if form.validate_on_submit():
+        # کپچا پیش از هر بررسی نام کاربری و رمز انجام می‌شود
+        if not verify_challenge(form.captcha.data):
+            flash("کد امنیتی اشتباه یا منقضی شده است.", "danger")
+            form.captcha.data = ""
+            return render_template("admin/login.html", form=form)
+
         admin = Admin.query.filter_by(
             username=form.username.data.strip()
         ).first()
@@ -53,6 +61,15 @@ def login():
         flash("نام کاربری یا رمز عبور اشتباه است.", "danger")
 
     return render_template("admin/login.html", form=form)
+
+
+@admin_bp.route("/captcha.png", methods=["GET"])
+def captcha():
+    response = Response(create_challenge(), mimetype="image/png")
+    response.headers["Cache-Control"] = "no-store, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    return response
 
 
 @admin_bp.route("/logout", methods=["POST"])

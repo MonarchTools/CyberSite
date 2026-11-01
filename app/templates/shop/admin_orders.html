@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}سفارش‌ها | CyberSite{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/admin.css') }}">
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/products.css') }}">
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/shop.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="store-admin shop-page">
+
+    <div class="store-header">
+        <div>
+            <p class="admin-label">CYBERSITE / ORDERS</p>
+            <h1>سفارش‌ها</h1>
+        </div>
+
+        <a class="store-button" href="{{ url_for('admin.index') }}">
+            داشبورد
+        </a>
+    </div>
+
+    {% include "components/flashes.html" %}
+
+    <nav class="status-filter" aria-label="فیلتر وضعیت">
+        <a href="{{ url_for('shop.manage_orders') }}"
+           class="{{ 'active' if not current_status }}">همه</a>
+
+        {% for key in statuses.ALL %}
+            <a href="{{ url_for('shop.manage_orders', status=key) }}"
+               class="{{ 'active' if current_status == key }}">
+                {{ statuses.LABELS[key] }}
+            </a>
+        {% endfor %}
+    </nav>
+
+    <div class="products-panel">
+        <div class="product-table-wrap">
+            <table class="product-table">
+                <thead>
+                    <tr>
+                        <th>شماره</th>
+                        <th>مشتری</th>
+                        <th>موبایل</th>
+                        <th>مبلغ</th>
+                        <th>وضعیت</th>
+                        <th>تاریخ (UTC)</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for order in orders %}
+                        <tr>
+                            <td>{{ order.id }}</td>
+                            <td>{{ order.full_name }}</td>
+                            <td dir="ltr">{{ order.phone }}</td>
+                            <td>{{ order.total_rial|rial }}</td>
+                            <td>
+                                <span class="status-badge status-{{ order.status }}">
+                                    {{ order.status_label }}
+                                </span>
+                            </td>
+                            <td dir="ltr">{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                <a href="{{ url_for('shop.manage_order_detail', order_id=order.id) }}">
+                                    جزئیات
+                                </a>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="7">سفارشی ثبت نشده است.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if pagination.pages > 1 %}
+        <nav class="pagination" aria-label="صفحه‌بندی">
+            {% if pagination.has_prev %}
+                <a href="{{ url_for('shop.manage_orders', page=pagination.prev_num, status=current_status or None) }}">قبلی</a>
+            {% endif %}
+
+            <span class="current">{{ pagination.page }} / {{ pagination.pages }}</span>
+
+            {% if pagination.has_next %}
+                <a href="{{ url_for('shop.manage_orders', page=pagination.next_num, status=current_status or None) }}">بعدی</a>
+            {% endif %}
+        </nav>
+    {% endif %}
+
+</section>
+{% endblock %}

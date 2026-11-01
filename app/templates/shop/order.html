@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}سفارش {{ order.id }} | CyberSite{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/admin.css') }}">
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/products.css') }}">
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/shop.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="public-store shop-page">
+
+    <div class="store-header">
+        <div>
+            <p class="admin-label">CYBERSITE / ORDER</p>
+            <h1>سفارش شمارهٔ {{ order.id }}</h1>
+        </div>
+
+        <span class="status-badge status-{{ order.status }}">
+            {{ order.status_label }}
+        </span>
+    </div>
+
+    {% include "components/flashes.html" %}
+
+    <div class="shop-card">
+        <div class="product-table-wrap">
+            <table class="product-table">
+                <thead>
+                    <tr>
+                        <th>محصول</th>
+                        <th>قیمت واحد</th>
+                        <th>تعداد</th>
+                        <th>جمع</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items %}
+                        <tr>
+                            <td>{{ item.title }}</td>
+                            <td>{{ item.unit_price_rial|rial }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>{{ item.line_total_rial|rial }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="cart-summary">
+            <div>
+                <span>مبلغ سفارش</span>
+                <strong>{{ order.total_rial|rial }}</strong>
+            </div>
+        </div>
+
+        <dl class="order-meta">
+            <dt>نام</dt>
+            <dd>{{ order.full_name }}</dd>
+
+            <dt>موبایل</dt>
+            <dd dir="ltr">{{ order.phone }}</dd>
+
+            {% if order.ref_id %}
+                <dt>کد پیگیری پرداخت</dt>
+                <dd dir="ltr">{{ order.ref_id }}</dd>
+            {% endif %}
+
+            <dt>ثبت سفارش (UTC)</dt>
+            <dd dir="ltr">{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</dd>
+        </dl>
+
+        {% if can_recheck %}
+            <form method="POST"
+                  action="{{ url_for('shop.order_recheck', code=order.public_code) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="store-button" type="submit">
+                    بررسی مجدد پرداخت
+                </button>
+            </form>
+        {% endif %}
+    </div>
+
+    <p class="shop-note">
+        این صفحه با یک لینک اختصاصی باز می‌شود؛ آن را برای پیگیری سفارش نگه دارید.
+    </p>
+
+    <a class="admin-back" href="{{ url_for('products.index') }}">
+        بازگشت به فروشگاه
+    </a>
+
+</section>
+{% endblock %}

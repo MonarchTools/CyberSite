@@ -23,7 +23,8 @@ class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150), nullable=False)
     description = db.Column(db.Text, nullable=True)
-    price = db.Column(db.Numeric(12, 2), nullable=False)
+    # قیمت به ریال، عدد صحیح (بدون اعشار)
+    price = db.Column(db.BigInteger, nullable=False)
     stock = db.Column(db.Integer, nullable=False, default=0)
     image_filename = db.Column(db.String(255), nullable=True)
 

@@ -9,6 +9,8 @@ from flask import (
     send_from_directory, abort
 )
 from flask_login import login_required
+from sqlalchemy import or_
+from sqlalchemy.orm import joinedload
 from werkzeug.utils import secure_filename
 
 from app.extensions import db
@@ -108,15 +110,103 @@ def remove_product_image(filename):
     if path.is_symlink() or path.is_file():
         path.unlink()
 
+SORT_OPTIONS = {
+    "newest": ("جدیدترین", lambda: Product.created_at.desc()),
+    "cheapest": ("ارزان‌ترین", lambda: Product.price.asc()),
+    "expensive": ("گران‌ترین", lambda: Product.price.desc()),
+}
+
+
+def _escape_like(text):
+    return (
+        text.replace("\\", "\\\\")
+        .replace("%", "\\%")
+        .replace("_", "\\_")
+    )
+
+
 @products_bp.route("/")
 def index():
-    products = Product.query.order_by(
-        Product.created_at.desc()
-    ).all()
+    search = request.args.get("q", "").strip()[:80]
+    sort = request.args.get("sort", "newest")
+    in_stock = request.args.get("in_stock") == "1"
+
+    try:
+        category_id = int(request.args.get("category", ""))
+    except ValueError:
+        category_id = None
+
+    try:
+        page = max(int(request.args.get("page", "1")), 1)
+    except ValueError:
+        page = 1
+
+    if sort not in SORT_OPTIONS:
+        sort = "newest"
+
+    query = Product.query.options(joinedload(Product.category))
+
+    if category_id:
+        query = query.filter(Product.category_id == category_id)
+
+    if search:
+        pattern = f"%{_escape_like(search)}%"
+        query = query.filter(
+            or_(
+                Product.title.ilike(pattern, escape="\\"),
+                Product.description.ilike(pattern, escape="\\"),
+            )
+        )
+
+    if in_stock:
+        query = query.filter(Product.stock > 0)
+
+    pagination = query.order_by(
+        SORT_OPTIONS[sort][1](),
+        Product.id.desc()
+    ).paginate(
+        page=page,
+        per_page=current_app.config.get("PRODUCTS_PER_PAGE", 9),
+        error_out=False
+    )
+
+    categories = Category.query.order_by(Category.name).all()
 
     return render_template(
         "products/list.html",
-        products=products
+        products=pagination.items,
+        pagination=pagination,
+        categories=categories,
+        sort_options=SORT_OPTIONS,
+        filters={
+            "q": search,
+            "category": category_id,
+            "sort": sort,
+            "in_stock": in_stock,
+        }
+    )
+
+
+@products_bp.route("/<int:product_id>")
+def detail(product_id):
+    product = db.session.get(Product, product_id)
+
+    if product is None:
+        abort(404)
+
+    related = Product.query.filter(
+        Product.category_id == product.category_id,
+        Product.id != product.id
+    ).order_by(Product.created_at.desc()).limit(4).all()
+
+    return render_template(
+        "products/detail.html",
+        product=product,
+        related=related,
+        max_quantity=min(
+            max(product.stock, 1),
+            current_app.config.get("MAX_CART_ITEM_QUANTITY", 20)
+        )
     )
 
 

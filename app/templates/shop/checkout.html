@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}ثبت سفارش | CyberSite{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/admin.css') }}">
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/products.css') }}">
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/shop.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="public-store shop-page">
+
+    <div class="store-header">
+        <div>
+            <p class="admin-label">CYBERSITE / CHECKOUT</p>
+            <h1>ثبت سفارش</h1>
+        </div>
+    </div>
+
+    {% include "components/flashes.html" %}
+
+    <div class="checkout-layout">
+
+        <form method="POST"
+              action="{{ url_for('shop.checkout') }}"
+              class="shop-card checkout-form"
+              novalidate>
+            {{ form.hidden_tag() }}
+
+            {% for field in (form.full_name, form.phone, form.email) %}
+                <div class="admin-form-group">
+                    {{ field.label }}
+                    {{ field(class="admin-input") }}
+                    {% for error in field.errors %}
+                        <small class="form-error">{{ error }}</small>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+
+            <div class="admin-form-group">
+                {{ form.note.label }}
+                {{ form.note(class="admin-input", rows="4") }}
+                {% for error in form.note.errors %}
+                    <small class="form-error">{{ error }}</small>
+                {% endfor %}
+            </div>
+
+            {{ form.submit(class="store-button") }}
+
+            <a class="admin-back" href="{{ url_for('shop.cart') }}">
+                بازگشت به سبد خرید
+            </a>
+        </form>
+
+        <aside class="shop-card order-summary">
+            <h2>خلاصهٔ سفارش</h2>
+
+            <ul>
+                {% for line in lines %}
+                    <li>
+                        <span>{{ line.product.title }} × {{ line.quantity }}</span>
+                        <span>{{ line.line_total|rial }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+
+            <div class="cart-summary-total">
+                <span>جمع کل</span>
+                <strong>{{ total|rial }}</strong>
+            </div>
+        </aside>
+
+    </div>
+
+</section>
+{% endblock %}

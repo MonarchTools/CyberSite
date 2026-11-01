@@ -1,0 +1,595 @@
+diff --git a/app/modules/admin/captcha.py b/app/modules/admin/captcha.py
+new file mode 100644
+index 0000000..aeb4dab
+--- /dev/null
++++ b/app/modules/admin/captcha.py
+@@ -0,0 +1,219 @@
++"""کپچای تصویری سمت سرور برای فرم ورود مدیر.
++
++طراحی:
++- متن کپچا فقط روی سرور ساخته می‌شود و هرگز به کلاینت نمی‌رسد؛ در دیتابیس
++  فقط HMAC پاسخ نگه‌داری می‌شود (با SECRET_KEY).
++- هر چالش یک‌بارمصرف است و بعد از ``CAPTCHA_TTL`` ثانیه منقضی می‌شود؛
++  بنابراین تکرار (replay) یک پاسخ درست ممکن نیست.
++- کوکی نشست فقط توکن تصادفی چالش را نگه می‌دارد، نه پاسخ را.
++"""
++
++import hashlib
++import hmac
++import io
++import math
++import secrets
++import time
++
++from flask import current_app, session
++from PIL import Image, ImageDraw, ImageFilter, ImageFont
++
++from app.extensions import db
++from app.modules.admin.models import CaptchaChallenge
++
++
++CAPTCHA_LENGTH = 5
++CAPTCHA_TTL = 180  # ثانیه
++SESSION_KEY = "captcha_token"
++
++# حروف و ارقام مبهم (I, O, 0, 1) حذف شده‌اند.
++ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
++
++_rng = secrets.SystemRandom()
++
++_FONT_CANDIDATES = (
++    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
++    "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
++    "/Library/Fonts/Arial Bold.ttf",
++    "C:/Windows/Fonts/arialbd.ttf",
++    "DejaVuSans-Bold.ttf",
++    "arialbd.ttf",
++)
++
++# ارقام فارسی و عربی هم پذیرفته می‌شوند (کاربر با کیبورد فارسی).
++_DIGIT_MAP = str.maketrans(
++    "۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩",
++    "01234567890123456789",
++)
++
++
++def _random_text():
++    return "".join(_rng.choice(ALPHABET) for _ in range(CAPTCHA_LENGTH))
++
++
++def normalize_answer(value):
++    return (value or "").translate(_DIGIT_MAP).strip().replace(" ", "").upper()
++
++
++def _load_font(size):
++    for path in _FONT_CANDIDATES:
++        try:
++            return ImageFont.truetype(path, size)
++        except OSError:
++            continue
++
++    try:
++        return ImageFont.load_default(size=size)
++    except TypeError:  # Pillow قدیمی‌تر از 10.1
++        return ImageFont.load_default()
++
++
++def _rand_color(low, high):
++    return tuple(_rng.randint(low, high) for _ in range(3))
++
++
++def render_captcha(text):
++    """متن را به تصویر PNG (bytes) تبدیل می‌کند."""
++    width, height = 200, 70
++    background = _rand_color(225, 250)
++
++    canvas = Image.new("RGB", (width, height), background)
++    draw = ImageDraw.Draw(canvas)
++
++    for _ in range(5):
++        draw.line(
++            [
++                (_rng.randint(0, width), _rng.randint(0, height)),
++                (_rng.randint(0, width), _rng.randint(0, height)),
++            ],
++            fill=_rand_color(150, 210),
++            width=2,
++        )
++
++    font = _load_font(38)
++    slot = (width - 20) // len(text)
++
++    for index, char in enumerate(text):
++        tile = Image.new("L", (64, 64), 0)
++        tile_draw = ImageDraw.Draw(tile)
++        left, top, right, bottom = tile_draw.textbbox((0, 0), char, font=font)
++        tile_draw.text(
++            (
++                (64 - (right - left)) / 2 - left,
++                (64 - (bottom - top)) / 2 - top,
++            ),
++            char,
++            fill=255,
++            font=font,
++        )
++        tile = tile.rotate(
++            _rng.uniform(-28, 28),
++            resample=Image.BICUBIC,
++        )
++
++        ink = Image.new("RGB", (64, 64), _rand_color(10, 110))
++        x = 10 + index * slot - (64 - slot) // 2 + _rng.randint(-3, 3)
++        y = (height - 64) // 2 + _rng.randint(-5, 5)
++        canvas.paste(ink, (x, y), tile)
++
++    # موج‌دار کردن تصویر
++    waved = Image.new("RGB", (width, height), background)
++    amplitude = _rng.uniform(2, 4)
++    period = _rng.uniform(40, 70)
++    phase = _rng.uniform(0, 2 * math.pi)
++
++    for col in range(width):
++        shift = int(amplitude * math.sin(2 * math.pi * col / period + phase))
++        waved.paste(canvas.crop((col, 0, col + 1, height)), (col, shift))
++
++    top_draw = ImageDraw.Draw(waved)
++
++    for _ in range(3):
++        top_draw.line(
++            [
++                (_rng.randint(0, width), _rng.randint(0, height)),
++                (_rng.randint(0, width), _rng.randint(0, height)),
++            ],
++            fill=_rand_color(60, 160),
++            width=2,
++        )
++
++    for _ in range(140):
++        top_draw.point(
++            (_rng.randint(0, width - 1), _rng.randint(0, height - 1)),
++            fill=_rand_color(40, 180),
++        )
++
++    waved = waved.filter(ImageFilter.SMOOTH)
++
++    buffer = io.BytesIO()
++    waved.save(buffer, format="PNG")
++    return buffer.getvalue()
++
++
++def _answer_hash(token, answer):
++    key = current_app.config["SECRET_KEY"].encode("utf-8")
++    message = f"{token}:{answer}".encode("utf-8")
++    return hmac.new(key, message, hashlib.sha256).hexdigest()
++
++
++def create_challenge():
++    """چالش جدید می‌سازد، چالش قبلی همین نشست را باطل می‌کند و PNG برمی‌گرداند."""
++    now = time.time()
++
++    CaptchaChallenge.query.filter(
++        CaptchaChallenge.expires_at < now
++    ).delete(synchronize_session=False)
++
++    previous = session.pop(SESSION_KEY, None)
++
++    if previous:
++        CaptchaChallenge.query.filter_by(token=previous).delete(
++            synchronize_session=False
++        )
++
++    token = secrets.token_urlsafe(32)
++    text = _random_text()
++
++    db.session.add(
++        CaptchaChallenge(
++            token=token,
++            answer_hash=_answer_hash(token, text),
++            expires_at=now + CAPTCHA_TTL,
++        )
++    )
++    db.session.commit()
++
++    session[SESSION_KEY] = token
++
++    return render_captcha(text)
++
++
++def verify_challenge(answer):
++    """پاسخ را بررسی می‌کند. چالش در هر حالت مصرف (حذف) می‌شود."""
++    token = session.pop(SESSION_KEY, None)
++    answer = normalize_answer(answer)
++
++    if not token or len(answer) != CAPTCHA_LENGTH:
++        if token:
++            CaptchaChallenge.query.filter_by(token=token).delete(
++                synchronize_session=False
++            )
++            db.session.commit()
++        return False
++
++    challenge = db.session.get(CaptchaChallenge, token)
++
++    if challenge is None:
++        return False
++
++    expires_at = challenge.expires_at
++    expected = challenge.answer_hash
++
++    db.session.delete(challenge)
++    db.session.commit()
++
++    if expires_at < time.time():
++        return False
++
++    return hmac.compare_digest(expected, _answer_hash(token, answer))
+diff --git a/app/modules/admin/forms.py b/app/modules/admin/forms.py
+index e784260..7724085 100644
+--- a/app/modules/admin/forms.py
++++ b/app/modules/admin/forms.py
+@@ -3,6 +3,8 @@ from flask_wtf import FlaskForm
+ from wtforms import StringField, PasswordField, SubmitField
+ from wtforms.validators import DataRequired, Length
+ 
++from app.modules.admin.captcha import CAPTCHA_LENGTH
++
+ 
+ class LoginForm(FlaskForm):
+     username = StringField(
+@@ -18,4 +20,12 @@ class LoginForm(FlaskForm):
+         validators=[DataRequired()]
+     )
+ 
++    captcha = StringField(
++        "کد امنیتی",
++        validators=[
++            DataRequired(),
++            Length(min=CAPTCHA_LENGTH, max=CAPTCHA_LENGTH + 4)
++        ]
++    )
++
+     submit = SubmitField("ورود به پنل")
+diff --git a/app/modules/admin/models.py b/app/modules/admin/models.py
+index 2ac8cad..564a34a 100644
+--- a/app/modules/admin/models.py
++++ b/app/modules/admin/models.py
+@@ -75,3 +75,25 @@ class LoginAttempt(db.Model):
+         db.Float,
+         nullable=False
+     )
++
++
++class CaptchaChallenge(db.Model):
++    """چالش کپچای یک‌بارمصرف؛ فقط HMAC پاسخ ذخیره می‌شود، نه خود پاسخ."""
++
++    __tablename__ = "captcha_challenges"
++
++    token = db.Column(
++        db.String(64),
++        primary_key=True
++    )
++
++    answer_hash = db.Column(
++        db.String(64),
++        nullable=False
++    )
++
++    expires_at = db.Column(
++        db.Float,
++        nullable=False,
++        index=True
++    )
+diff --git a/app/modules/admin/routes.py b/app/modules/admin/routes.py
+index c2e1bf6..ae30ebe 100644
+--- a/app/modules/admin/routes.py
++++ b/app/modules/admin/routes.py
+@@ -15,6 +15,8 @@ from flask_login import (
+ 
+ from app.modules.admin.models import Admin
+ from app.modules.admin.forms import LoginForm
++from app.modules.admin.captcha import create_challenge, verify_challenge
++from flask import Response
+ 
+ 
+ admin_bp = Blueprint(
+@@ -41,6 +43,12 @@ def login():
+     form = LoginForm()
+ 
+     if form.validate_on_submit():
++        # کپچا پیش از هر بررسی نام کاربری و رمز انجام می‌شود
++        if not verify_challenge(form.captcha.data):
++            flash("کد امنیتی اشتباه یا منقضی شده است.", "danger")
++            form.captcha.data = ""
++            return render_template("admin/login.html", form=form)
++
+         admin = Admin.query.filter_by(
+             username=form.username.data.strip()
+         ).first()
+@@ -55,6 +63,15 @@ def login():
+     return render_template("admin/login.html", form=form)
+ 
+ 
++@admin_bp.route("/captcha.png", methods=["GET"])
++def captcha():
++    response = Response(create_challenge(), mimetype="image/png")
++    response.headers["Cache-Control"] = "no-store, max-age=0"
++    response.headers["Pragma"] = "no-cache"
++    response.headers["X-Content-Type-Options"] = "nosniff"
++    return response
++
++
+ @admin_bp.route("/logout", methods=["POST"])
+ @login_required
+ def logout():
+diff --git a/app/static/css/pages/admin.css b/app/static/css/pages/admin.css
+index 451a674..67a0134 100644
+--- a/app/static/css/pages/admin.css
++++ b/app/static/css/pages/admin.css
+@@ -196,3 +196,40 @@
+         padding: 25px;
+     }
+ }
++
++/* Captcha */
++.captcha-box {
++    display: flex;
++    align-items: center;
++    gap: 10px;
++    margin-bottom: 10px;
++    flex-wrap: wrap;
++}
++
++.captcha-image {
++    border-radius: 10px;
++    border: 1px solid rgba(255, 255, 255, 0.15);
++    max-width: 100%;
++    height: auto;
++    background: #e8ecf4;
++}
++
++.captcha-refresh {
++    background: transparent;
++    color: inherit;
++    border: 1px solid rgba(255, 255, 255, 0.25);
++    border-radius: 8px;
++    padding: 8px 12px;
++    font: inherit;
++    cursor: pointer;
++}
++
++.captcha-refresh:hover {
++    border-color: rgba(255, 255, 255, 0.5);
++}
++
++.captcha-input {
++    text-align: center;
++    letter-spacing: 0.25em;
++    text-transform: uppercase;
++}
+diff --git a/app/static/js/main.js b/app/static/js/main.js
+index 20f4368..49e15f2 100644
+--- a/app/static/js/main.js
++++ b/app/static/js/main.js
+@@ -2,4 +2,29 @@ document.addEventListener("DOMContentLoaded", () => {
+     console.log("CyberSite initialized successfully.");
+ 
+     document.documentElement.classList.add("js-ready");
+-});
+\ No newline at end of file
++});
++
++document.addEventListener("click", (event) => {
++    const button = event.target.closest("[data-captcha-refresh]");
++
++    if (!button) {
++        return;
++    }
++
++    const form = button.closest("form");
++    const image = form && form.querySelector("[data-captcha-image]");
++
++    if (!image) {
++        return;
++    }
++
++    const base = image.getAttribute("src").split("?")[0];
++    image.src = base + "?t=" + Date.now();
++
++    const input = form.querySelector("input[name='captcha']");
++
++    if (input) {
++        input.value = "";
++        input.focus();
++    }
++});
+diff --git a/app/templates/admin/login.html b/app/templates/admin/login.html
+index 364a291..1401231 100644
+--- a/app/templates/admin/login.html
++++ b/app/templates/admin/login.html
+@@ -50,6 +50,35 @@
+                 ) }}
+             </div>
+ 
++            <div class="admin-form-group">
++                {{ form.captcha.label }}
++
++                <div class="captcha-box">
++                    <img src="{{ url_for('admin.captcha') }}"
++                         alt="تصویر کد امنیتی"
++                         width="200" height="70"
++                         class="captcha-image"
++                         data-captcha-image>
++
++                    <button type="button"
++                            class="captcha-refresh"
++                            data-captcha-refresh
++                            aria-label="دریافت کد امنیتی جدید">
++                        ↻ تصویر جدید
++                    </button>
++                </div>
++
++                {{ form.captcha(
++                    class="admin-input captcha-input",
++                    placeholder="کد داخل تصویر را وارد کنید",
++                    autocomplete="off",
++                    autocapitalize="characters",
++                    spellcheck="false",
++                    maxlength="9",
++                    dir="ltr"
++                ) }}
++            </div>
++
+             {{ form.submit(class="admin-submit") }}
+         </form>
+ 
+diff --git a/tests/test_captcha.py b/tests/test_captcha.py
+new file mode 100644
+index 0000000..1a49442
+--- /dev/null
++++ b/tests/test_captcha.py
+@@ -0,0 +1,145 @@
++import time
++
++import pytest
++
++from app import create_app
++from app.extensions import db
++from app.modules.admin import captcha as captcha_module
++from app.modules.admin.models import Admin, CaptchaChallenge
++
++
++PASSWORD = "a-very-long-password-123"
++
++
++class CaptchaTestConfig:
++    TESTING = True
++    SECRET_KEY = "test-secret"
++    SQLALCHEMY_DATABASE_URI = "sqlite://"
++    SQLALCHEMY_TRACK_MODIFICATIONS = False
++    WTF_CSRF_ENABLED = False
++
++
++@pytest.fixture()
++def app(monkeypatch):
++    # متن کپچا را ثابت می‌کنیم تا تست بتواند پاسخ درست را بفرستد
++    monkeypatch.setattr(captcha_module, "_random_text", lambda: "ABCDE")
++
++    app = create_app(CaptchaTestConfig)
++
++    with app.app_context():
++        admin = Admin(username="owner")
++        admin.set_password(PASSWORD)
++        db.session.add(admin)
++        db.session.commit()
++
++    yield app
++
++    with app.app_context():
++        db.session.remove()
++        db.drop_all()
++
++
++@pytest.fixture()
++def client(app):
++    return app.test_client()
++
++
++def login(client, captcha="ABCDE", password=PASSWORD):
++    return client.post(
++        "/admin/login",
++        data={
++            "username": "owner",
++            "password": password,
++            "captcha": captcha,
++        },
++    )
++
++
++def test_captcha_image_is_png_and_not_cached(client):
++    response = client.get("/admin/captcha.png")
++
++    assert response.status_code == 200
++    assert response.mimetype == "image/png"
++    assert response.data.startswith(b"\x89PNG")
++    assert "no-store" in response.headers["Cache-Control"]
++
++
++def test_login_page_contains_captcha(client):
++    html = client.get("/admin/login").get_data(as_text=True)
++
++    assert "/admin/captcha.png" in html
++    assert 'name="captcha"' in html
++
++
++def test_login_succeeds_with_correct_captcha(client):
++    client.get("/admin/captcha.png")
++
++    response = login(client)
++
++    assert response.status_code == 302
++    assert client.get("/admin/").status_code == 200
++
++
++def test_wrong_captcha_rejected_even_with_correct_password(client):
++    client.get("/admin/captcha.png")
++
++    response = login(client, captcha="ZZZZZ")
++
++    assert response.status_code == 200
++    assert "کد امنیتی" in response.get_data(as_text=True)
++    assert client.get("/admin/").status_code == 302
++
++
++def test_login_without_requesting_captcha_fails(client):
++    assert login(client).status_code == 200
++    assert client.get("/admin/").status_code == 302
++
++
++def test_captcha_is_single_use(client):
++    client.get("/admin/captcha.png")
++
++    # اولین تلاش با رمز اشتباه، چالش را مصرف می‌کند
++    login(client, password="wrong-password-123")
++
++    # همان پاسخ درست بدون چالش تازه دیگر پذیرفته نمی‌شود
++    response = login(client)
++
++    assert response.status_code == 200
++    assert client.get("/admin/").status_code == 302
++
++
++def test_new_image_invalidates_previous_challenge(app, client):
++    client.get("/admin/captcha.png")
++    client.get("/admin/captcha.png")
++
++    with app.app_context():
++        assert CaptchaChallenge.query.count() == 1
++
++
++def test_expired_captcha_rejected(app, client):
++    client.get("/admin/captcha.png")
++
++    with app.app_context():
++        challenge = CaptchaChallenge.query.one()
++        challenge.expires_at = time.time() - 1
++        db.session.commit()
++
++    assert login(client).status_code == 200
++    assert client.get("/admin/").status_code == 302
++
++
++def test_answer_is_not_stored_in_plaintext(app, client):
++    client.get("/admin/captcha.png")
++
++    with app.app_context():
++        challenge = CaptchaChallenge.query.one()
++
++        assert "ABCDE" not in challenge.answer_hash
++        assert "ABCDE" not in challenge.token
++
++
++def test_answer_is_case_and_digit_insensitive(client, monkeypatch):
++    monkeypatch.setattr(captcha_module, "_random_text", lambda: "AB234")
++    client.get("/admin/captcha.png")
++
++    assert login(client, captcha=" ab۲۳۴ ").status_code == 302

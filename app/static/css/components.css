@@ -96,3 +96,21 @@
     display: flex;
     justify-content: space-between;
 }
+/* سبد خرید در ناوبری */
+.nav-cart {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.cart-badge {
+    display: inline-block;
+    min-width: 20px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    background: #087CFF;
+    color: #fff;
+    font-size: 12px;
+    line-height: 18px;
+    text-align: center;
+}

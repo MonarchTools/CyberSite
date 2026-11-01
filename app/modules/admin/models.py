@@ -75,3 +75,25 @@ class LoginAttempt(db.Model):
         db.Float,
         nullable=False
     )
+
+
+class CaptchaChallenge(db.Model):
+    """چالش کپچای یک‌بارمصرف؛ فقط HMAC پاسخ ذخیره می‌شود، نه خود پاسخ."""
+
+    __tablename__ = "captcha_challenges"
+
+    token = db.Column(
+        db.String(64),
+        primary_key=True
+    )
+
+    answer_hash = db.Column(
+        db.String(64),
+        nullable=False
+    )
+
+    expires_at = db.Column(
+        db.Float,
+        nullable=False,
+        index=True
+    )

@@ -1,7 +1,7 @@
 ﻿from app.modules.products.models import Product, Category
 from app.modules.home.models import SiteSetting
 from app.modules.admin.models import Admin
-from app.modules.products.models import Product, Category
+from app.modules.shop.models import Order, OrderItem
 from pathlib import Path
 from flask import Flask
 
@@ -38,12 +38,22 @@ def create_app(config_class=Config):
     from app.modules.blog.routes import blog_bp
     from app.modules.admin.routes import admin_bp
     from app.modules.contact.routes import contact_bp
+    from app.modules.shop.routes import shop_bp
+    from app.modules.shop.services import cart_count
+    from app.utils import format_rial
 
     app.register_blueprint(home_bp)
     app.register_blueprint(products_bp)
     app.register_blueprint(blog_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(contact_bp)
+    app.register_blueprint(shop_bp)
+
+    app.jinja_env.filters["rial"] = format_rial
+
+    @app.context_processor
+    def inject_cart_count():
+        return {"cart_item_count": cart_count()}
 
     with app.app_context():
         db.create_all()
