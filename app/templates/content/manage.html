@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}ویرایش متن‌های سایت | CyberSite{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/products.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/shop.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="product-form-page shop-page">
+
+    <div class="product-form-card content-editor">
+        <p class="admin-label">CYBERSITE / CONTENT</p>
+        <h1>ویرایش متن‌های سایت</h1>
+        <p class="shop-note">
+            هر فیلدی را خالی بگذارید یا پاک کنید تا متن پیش‌فرض (خاکستری) نمایش داده شود.
+            فقط متن ساده پذیرفته می‌شود.
+        </p>
+
+        {% include "components/flashes.html" %}
+
+        <form method="POST" novalidate>
+            {{ form.hidden_tag() }}
+
+            {% for title, fields in sections %}
+                <fieldset class="content-group">
+                    <legend>{{ title }}</legend>
+
+                    {% for field in fields %}
+                        <div class="admin-form-group">
+                            <label for="{{ field.key }}">{{ field.label }}</label>
+
+                            {% if field.kind == 'multiline' %}
+                                <textarea class="admin-input" id="{{ field.key }}" name="{{ field.key }}"
+                                          rows="4" maxlength="{{ field.max }}"
+                                          placeholder="{{ field.default_text }}">{{ field.value }}</textarea>
+                            {% else %}
+                                <input class="admin-input" id="{{ field.key }}" name="{{ field.key }}"
+                                       type="text" maxlength="{{ field.max }}"
+                                       {% if field.kind in ('url', 'email') %}dir="ltr"{% endif %}
+                                       value="{{ field.value }}"
+                                       placeholder="{{ field.default_text }}">
+                            {% endif %}
+
+                            {% if field.error %}
+                                <small class="form-error">{{ field.error }}</small>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </fieldset>
+            {% endfor %}
+
+            <button class="store-button" type="submit">ذخیرهٔ متن‌ها</button>
+        </form>
+
+        <a class="admin-back" href="{{ url_for('admin.index') }}">بازگشت به داشبورد</a>
+    </div>
+
+</section>
+{% endblock %}

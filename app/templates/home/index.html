@@ -14,27 +14,23 @@
 
     <div class="hero-badge">
         <span class="status-dot"></span>
-        PERSONAL CYBER PLATFORM
+        {{ c('home_badge') }}
     </div>
 
     <h1>
-        دنیای من در
-        <span class="gradient-text">فضای سایبری</span>
+        {{ c('home_title_prefix') }}
+        <span class="gradient-text">{{ c('home_title_accent') }}</span>
     </h1>
 
-    <p class="hero-description">
-        به وب‌سایت شخصی من خوش آمدید.
-        اینجا دنیایی از برنامه‌نویسی،
-        تکنولوژی، امنیت سایبری و پروژه‌های من است.
-    </p>
+    <p class="hero-description">{{ c('home_description') }}</p>
 
     <div class="hero-actions">
         <a href="{{ url_for('products.index') }}" class="btn-primary">
-            مشاهده فروشگاه
+            {{ c('home_btn_store') }}
         </a>
 
         <a href="{{ url_for('blog.index') }}" class="btn-secondary">
-            مطالعه وبلاگ
+            {{ c('home_btn_blog') }}
         </a>
     </div>
 
@@ -60,20 +56,20 @@
 
     <div class="feature-card">
         <span class="feature-icon">⌘</span>
-        <h3>برنامه‌نویسی</h3>
-        <p>پروژه‌ها و تجربیات برنامه‌نویسی</p>
+        <h3>{{ c('feature1_title') }}</h3>
+        <p>{{ c('feature1_text') }}</p>
     </div>
 
     <div class="feature-card">
         <span class="feature-icon">⌬</span>
-        <h3>امنیت سایبری</h3>
-        <p>دنیای امنیت و تکنولوژی</p>
+        <h3>{{ c('feature2_title') }}</h3>
+        <p>{{ c('feature2_text') }}</p>
     </div>
 
     <div class="feature-card">
         <span class="feature-icon">◈</span>
-        <h3>فروشگاه</h3>
-        <p>محصولات و خدمات دیجیتال</p>
+        <h3>{{ c('feature3_title') }}</h3>
+        <p>{{ c('feature3_text') }}</p>
     </div>
 
 </section>
@@ -82,7 +78,7 @@
 <section class="home-slider" data-slider
          aria-roledescription="carousel" aria-label="پروژه‌ها و تصاویر">
 
-    <h2 class="slider-heading">از پروژه‌ها</h2>
+    <h2 class="slider-heading">{{ c('slider_heading') }}</h2>
 
     <div class="slider-viewport">
         {% for slide in slides %}

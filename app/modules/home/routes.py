@@ -1,19 +1,19 @@
-import re
+from urllib.parse import urlparse
 
-from flask import Blueprint, current_app, render_template
+from flask import Blueprint, render_template
 
+from app.modules.content.registry import _EMAIL, https_only
+from app.modules.content.service import get_text
 from app.modules.slides.models import HomeSlide
 
 
 home_bp = Blueprint("home", __name__)
 
-_EMAIL = re.compile(r"^[^@\s<>\"']+@[^@\s<>\"']+\.[^@\s<>\"']+$")
 
-
-def _https_only(url):
-    """فقط آدرس https پذیرفته می‌شود (جلوگیری از javascript: و data: از .env)."""
-    url = (url or "").strip()
-    return url if url.lower().startswith("https://") and " " not in url else ""
+def _handle(url):
+    """از آدرس پروفایل، شناسهٔ نمایشی (@name) می‌سازد."""
+    name = urlparse(url).path.strip("/").split("/")[0] if url else ""
+    return f"@{name}" if name else ""
 
 
 @home_bp.route("/")
@@ -27,12 +27,16 @@ def index():
 
 @home_bp.route("/about")
 def about():
-    config = current_app.config
-    email = (config.get("PUBLIC_EMAIL") or "").strip()
+    # مقدار ذخیره‌شده هنگام نمایش هم دوباره بررسی می‌شود (دفاع دوم)
+    instagram = https_only(get_text("instagram_url"))
+    telegram = https_only(get_text("telegram_url"))
+    email = get_text("public_email").strip()
 
     return render_template(
         "home/about.html",
-        instagram_url=_https_only(config.get("SOCIAL_INSTAGRAM_URL")),
-        telegram_url=_https_only(config.get("SOCIAL_TELEGRAM_URL")),
+        instagram_url=instagram,
+        instagram_handle=_handle(instagram),
+        telegram_url=telegram,
+        telegram_handle=_handle(telegram),
         email=email if _EMAIL.match(email) else ""
     )

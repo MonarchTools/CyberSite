@@ -11,6 +11,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from app.modules.admin.captcha import create_challenge, verify_challenge
 from app.modules.admin.forms import LoginForm
 from app.modules.admin.models import Admin
+from app.modules.comments.models import Comment, CommentStatus
 from app.modules.contact.models import ContactMessage
 from app.modules.shop.models import Fulfillment, Order, OrderStatus
 from app.modules.admin.throttle import (
@@ -38,6 +39,10 @@ def index():
         ContactMessage.is_read.is_(False)
     ).count()
 
+    pending_comments = Comment.query.filter(
+        Comment.status == CommentStatus.PENDING
+    ).count()
+
     new_orders = Order.query.filter(
         Order.status == OrderStatus.PAID,
         Order.fulfillment == Fulfillment.NEW
@@ -47,7 +52,8 @@ def index():
         "admin/dashboard.html",
         admin=current_user,
         unread_messages=unread_messages,
-        new_orders=new_orders
+        new_orders=new_orders,
+        pending_comments=pending_comments
     )
 
 

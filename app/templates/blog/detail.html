@@ -51,6 +51,8 @@
         {% endif %}
     </article>
 
+    {% include "blog/_comments.html" %}
+
     <a class="admin-back" href="{{ url_for('blog.index') }}">
         بازگشت به وبلاگ
     </a>

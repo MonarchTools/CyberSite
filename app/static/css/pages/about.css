@@ -9,6 +9,10 @@
     margin: 8px 0 var(--space-4);
 }
 
+.about-text {
+    white-space: pre-line;
+}
+
 .about-intro p:not(.admin-label) {
     max-width: 720px;
     color: var(--text-secondary);

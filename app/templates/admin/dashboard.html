@@ -57,6 +57,20 @@
             <p>نوشتن و ویرایش پست‌ها</p>
         </a>
 
+        <a href="{{ url_for('comments.manage_comments') }}"
+           class="dashboard-card">
+            <span>❝</span>
+            <h2>نظرهای وبلاگ{% if pending_comments %}<b class="card-badge">{{ pending_comments }}</b>{% endif %}</h2>
+            <p>تأیید و حذف نظرها</p>
+        </a>
+
+        <a href="{{ url_for('content.manage_content') }}"
+           class="dashboard-card">
+            <span>✎</span>
+            <h2>ویرایش متن‌های سایت</h2>
+            <p>صفحهٔ اصلی، درباره من و لینک‌ها</p>
+        </a>
+
         <a href="{{ url_for('slides.manage_slides') }}"
            class="dashboard-card">
             <span>▦</span>

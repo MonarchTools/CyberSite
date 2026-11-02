@@ -50,6 +50,11 @@ def create_app(config_class=Config):
     from app.modules.contact.routes import contact_bp
     from app.modules.shop.routes import shop_bp
     from app.modules.slides.routes import slides_bp
+    from app.modules.content.routes import content_bp
+    from app.modules.comments.routes import comments_bp
+    from app.modules.comments import models as _comment_models  # noqa: F401 - برای create_all
+    from app.modules.content import models as _content_models  # noqa: F401 - برای create_all
+    from app.modules.content.service import get_text
     from app.modules.slides import models as _slide_models  # noqa: F401 - برای create_all
     from app.modules.shop.services import cart_count
     from app.utils import format_rial
@@ -61,12 +66,19 @@ def create_app(config_class=Config):
     app.register_blueprint(contact_bp)
     app.register_blueprint(shop_bp)
     app.register_blueprint(slides_bp)
+    app.register_blueprint(content_bp)
+    app.register_blueprint(comments_bp)
 
     app.jinja_env.filters["rial"] = format_rial
 
     @app.context_processor
     def inject_cart_count():
         return {"cart_item_count": cart_count()}
+
+    @app.context_processor
+    def inject_site_content():
+        # c('کلید') = متن ویرایش‌شدهٔ مدیر یا متن پیش‌فرض
+        return {"c": get_text}
 
     with app.app_context():
         db.create_all()

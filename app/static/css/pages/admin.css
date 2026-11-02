@@ -218,13 +218,17 @@
 }
 
 /* فرم تماس و صندوق پیام */
+/* پنهان از چشم ولی نه با جابه‌جایی بسیار دور (در صفحهٔ راست‌به‌چپ اسکرول افقی می‌ساخت) */
 .hp-field {
     position: absolute;
-    left: -10000px;
-    top: auto;
     width: 1px;
     height: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
     overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
 }
 
 .contact-layout {
@@ -278,4 +282,27 @@
     .contact-layout {
         grid-template-columns: 1fr;
     }
+}
+
+/* ---------- ویرایش متن‌های سایت ---------- */
+
+.content-editor {
+    max-width: 820px;
+}
+
+.content-group {
+    margin: 0 0 var(--space-6);
+    padding: var(--space-5);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+}
+
+.content-group legend {
+    padding: 0 var(--space-3);
+    color: var(--blue-neon);
+    font-weight: bold;
+}
+
+.content-editor textarea.admin-input {
+    resize: vertical;
 }

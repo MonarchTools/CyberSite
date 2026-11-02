@@ -92,5 +92,11 @@ class Config:
     MAIL_ASYNC = True
     MAIL_TIMEOUT = 10
 
+    # --- نظرات وبلاگ ---
+    COMMENTS_ENABLED = os.getenv("COMMENTS_ENABLED", "1") != "0"
+    # فقط با COMMENTS_AUTO_APPROVE=1 نظرها بدون تأیید مدیر نمایش داده می‌شوند
+    COMMENTS_AUTO_APPROVE = os.getenv("COMMENTS_AUTO_APPROVE", "0") == "1"
+    COMMENT_MAX_PER_HOUR = 5
+
     # حداکثر پیام فرم تماس از هر IP در یک ساعت
     CONTACT_MAX_PER_HOUR = 5

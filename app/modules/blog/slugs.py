@@ -7,7 +7,7 @@ import unicodedata
 # با مسیرهای مدیریت یکی نشوند
 RESERVED = {
     "manage", "create", "edit", "delete", "new",
-    "feed", "rss", "page", "image",
+    "feed", "rss", "page", "image", "comments",
 }
 
 _NON_WORD = re.compile(r"[^\w\-]+", re.UNICODE)

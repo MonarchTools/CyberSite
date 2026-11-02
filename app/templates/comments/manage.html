@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}مدیریت نظرها | CyberSite{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/products.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/shop.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/posts.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="store-admin shop-page">
+
+    <div class="store-header">
+        <div>
+            <p class="admin-label">CYBERSITE / COMMENTS</p>
+            <h1>نظرهای وبلاگ</h1>
+            <p>{{ pending }} نظر در انتظار تأیید</p>
+        </div>
+
+        <div class="header-actions">
+            <a class="store-button" href="{{ url_for('blog.manage_posts') }}">مدیریت وبلاگ</a>
+            <a class="store-button" href="{{ url_for('admin.index') }}">داشبورد</a>
+        </div>
+    </div>
+
+    {% include "components/flashes.html" %}
+
+    <nav class="status-filter" aria-label="فیلتر نظرها">
+        <a href="{{ url_for('comments.manage_comments', filter='pending') }}"
+           class="{{ 'active' if current == 'pending' }}">در انتظار تأیید</a>
+        <a href="{{ url_for('comments.manage_comments', filter='approved') }}"
+           class="{{ 'active' if current == 'approved' }}">تأییدشده</a>
+        <a href="{{ url_for('comments.manage_comments', filter='all') }}"
+           class="{{ 'active' if current == 'all' }}">همه</a>
+    </nav>
+
+    <div class="products-panel">
+        <div class="product-table-wrap">
+            <table class="product-table">
+                <thead>
+                    <tr>
+                        <th>نام</th>
+                        <th>نظر</th>
+                        <th>پست</th>
+                        <th>وضعیت</th>
+                        <th>تاریخ (UTC)</th>
+                        <th>عملیات</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for comment in comments %}
+                        <tr>
+                            <td>{{ comment.name }}</td>
+                            <td class="comment-cell pre-line">{{ comment.body }}</td>
+                            <td>
+                                <a href="{{ url_for('blog.detail', slug=comment.post.slug) }}">
+                                    {{ comment.post.title }}
+                                </a>
+                            </td>
+                            <td>
+                                <span class="status-badge {{ 'status-paid' if comment.status == 'approved' }}">
+                                    {{ comment.status_label }}
+                                </span>
+                            </td>
+                            <td dir="ltr">{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td class="product-actions">
+                                {% if comment.status == 'approved' %}
+                                    <form method="POST" action="{{ url_for('comments.hide_comment', comment_id=comment.id) }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <input type="hidden" name="filter" value="{{ current }}">
+                                        <button class="store-button small" type="submit">برداشتن</button>
+                                    </form>
+                                {% else %}
+                                    <form method="POST" action="{{ url_for('comments.approve_comment', comment_id=comment.id) }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <input type="hidden" name="filter" value="{{ current }}">
+                                        <button class="store-button small" type="submit">تأیید</button>
+                                    </form>
+                                {% endif %}
+
+                                <form method="POST"
+                                      action="{{ url_for('comments.delete_comment', comment_id=comment.id) }}"
+                                      data-confirm="این نظر حذف شود؟">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="filter" value="{{ current }}">
+                                    <button class="delete-button" type="submit">حذف</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="6">نظری برای نمایش نیست.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if pagination.pages > 1 %}
+        <nav class="pagination" aria-label="صفحه‌بندی">
+            {% if pagination.has_prev %}
+                <a href="{{ url_for('comments.manage_comments', page=pagination.prev_num, filter=current) }}">قبلی</a>
+            {% endif %}
+            <span class="current">{{ pagination.page }} / {{ pagination.pages }}</span>
+            {% if pagination.has_next %}
+                <a href="{{ url_for('comments.manage_comments', page=pagination.next_num, filter=current) }}">بعدی</a>
+            {% endif %}
+        </nav>
+    {% endif %}
+
+</section>
+{% endblock %}

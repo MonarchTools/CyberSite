@@ -22,6 +22,7 @@
 }
 
 .hero-description {
+    white-space: pre-line;
     max-width: 680px;
     margin: 20px auto;
     color: var(--text-secondary);

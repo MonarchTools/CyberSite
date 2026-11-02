@@ -195,7 +195,17 @@ def detail(slug):
     if not post.is_published and not current_user.is_authenticated:
         abort(404)
 
-    return render_template("blog/detail.html", post=post)
+    # import محلی: ماژول نظرات خودش به مدل پست وابسته است
+    from app.modules.comments.forms import CommentForm
+    from app.modules.comments.routes import approved_comments
+
+    return render_template(
+        "blog/detail.html",
+        post=post,
+        comment_form=CommentForm(),
+        comments=approved_comments(post),
+        comments_enabled=current_app.config.get("COMMENTS_ENABLED", True),
+    )
 
 
 @blog_bp.route("/image/<filename>")

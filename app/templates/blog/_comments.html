@@ -1,0 +1,74 @@
+<section class="comments" id="comments" aria-labelledby="comments-title">
+
+    <h2 id="comments-title">نظرات{% if comments %} ({{ comments|length }}){% endif %}</h2>
+
+    {% include "components/flashes.html" %}
+
+    {% for comment in comments %}
+        <article class="comment">
+            <header>
+                <strong>{{ comment.name }}</strong>
+                <time dir="ltr">{{ comment.created_at.strftime('%Y-%m-%d') }}</time>
+            </header>
+            <p class="comment-body">{{ comment.body }}</p>
+        </article>
+    {% else %}
+        <p class="comments-empty">هنوز نظری ثبت نشده است.</p>
+    {% endfor %}
+
+    {% if comments_enabled and post.is_published %}
+        <form class="comment-form shop-card" method="POST"
+              action="{{ url_for('comments.submit', slug=post.slug) }}" novalidate>
+            {{ comment_form.hidden_tag() }}
+
+            <h3>نظر خود را بنویسید</h3>
+
+            <div class="admin-form-group">
+                {{ comment_form.name.label }}
+                {{ comment_form.name(class="admin-input", maxlength="60", autocomplete="nickname") }}
+                {% for error in comment_form.name.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+            </div>
+
+            <div class="admin-form-group">
+                {{ comment_form.body.label }}
+                {{ comment_form.body(class="admin-input", rows="4", maxlength="1000") }}
+                {% for error in comment_form.body.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+            </div>
+
+            <div class="hp-field" aria-hidden="true">
+                {{ comment_form.website.label }}
+                {{ comment_form.website(tabindex="-1", autocomplete="off") }}
+            </div>
+
+            <div class="admin-form-group">
+                {{ comment_form.captcha.label }}
+
+                <div class="captcha-box">
+                    <img src="{{ url_for('comments.captcha') }}"
+                         alt="تصویر کد امنیتی" width="200" height="70"
+                         class="captcha-image" data-captcha-image>
+
+                    <button type="button" class="captcha-refresh" data-captcha-refresh
+                            aria-label="دریافت کد امنیتی جدید">↻ تصویر جدید</button>
+                </div>
+
+                {{ comment_form.captcha(
+                    class="admin-input captcha-input",
+                    placeholder="کد داخل تصویر را وارد کنید",
+                    autocomplete="off", autocapitalize="characters",
+                    spellcheck="false", maxlength="9", dir="ltr"
+                ) }}
+                {% for error in comment_form.captcha.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+            </div>
+
+            <p class="shop-note">
+                نظرها پس از تأیید مدیر نمایش داده می‌شوند. ارسال لینک مجاز نیست.
+            </p>
+
+            {{ comment_form.submit(class="store-button") }}
+        </form>
+    {% elif not comments_enabled %}
+        <p class="comments-empty">ثبت نظر جدید فعلاً بسته است.</p>
+    {% endif %}
+
+</section>

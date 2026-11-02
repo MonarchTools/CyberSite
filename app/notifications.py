@@ -210,3 +210,20 @@ def notify_fulfillment_change(order):
         body += f"\nپیگیری سفارش: {_site_url()}/shop/order/{order.public_code}\n"
 
     send_mail(order.email, f"سفارش شمارهٔ {order.id} {text}", body)
+
+
+def notify_new_comment(comment, post):
+    if not _admin_address():
+        return
+
+    body = (
+        f"نظر تازه‌ای برای «{_clean(post.title, 120)}» ثبت شد"
+        f"{' و منتظر تأیید است' if comment.status == 'pending' else ''}.\n\n"
+        f"نام: {_clean(comment.name)}\n\n"
+        f"{str(comment.body)[:BODY_LIMIT]}\n"
+    )
+
+    if _site_url():
+        body += f"\nمدیریت نظرها: {_site_url()}/blog/comments\n"
+
+    send_mail(_admin_address(), f"نظر جدید برای {_clean(post.title, 60)}", body)
