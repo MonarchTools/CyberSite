@@ -66,6 +66,18 @@ class Config:
     # فقط وقتی مقدار بدهید که واقعاً پشت پروکسی هستید؛ وگرنه IP قابل جعل می‌شود.
     TRUSTED_PROXY_COUNT = int(os.getenv("TRUSTED_PROXY_COUNT", "0") or 0)
 
+    # حداکثر حجم ویدیوی اسلایدر (باید از سقف کل درخواست کمتر باشد)
+    SLIDE_VIDEO_MAX_BYTES = 20 * 1024 * 1024
+
+    # --- صفحهٔ «درباره من» (با .env قابل تغییر) ---
+    SOCIAL_INSTAGRAM_URL = os.getenv(
+        "SOCIAL_INSTAGRAM_URL", "https://www.instagram.com/monarch_central"
+    )
+    SOCIAL_TELEGRAM_URL = os.getenv(
+        "SOCIAL_TELEGRAM_URL", "https://t.me/sinagh83"
+    )
+    PUBLIC_EMAIL = os.getenv("PUBLIC_EMAIL", "sina8200736@gmail.com")
+
     # --- اعلان ایمیلی ---
     # اگر MAIL_SERVER یا MAIL_FROM خالی باشد، هیچ ایمیلی فرستاده نمی‌شود.
     MAIL_SERVER = os.getenv("MAIL_SERVER", "")

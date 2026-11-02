@@ -113,3 +113,195 @@
 @keyframes blink {
     50% { opacity: 0; }
 }
+
+/* ---------- اسلایدر صفحهٔ اصلی ---------- */
+
+.home-slider {
+    margin: var(--space-7) 0 80px;
+}
+
+.slider-heading {
+    margin-bottom: var(--space-4);
+    font-size: 22px;
+}
+
+.slider-viewport {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: var(--terminal-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+}
+
+.slide {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .5s ease, visibility .5s;
+}
+
+.slide.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.slide img,
+.slide video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.slide video {
+    object-fit: contain;
+    background: #000;
+}
+
+.slide-caption {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    padding: 56px var(--space-6) var(--space-5);
+    color: #fff;
+    background: linear-gradient(to top, rgba(6, 10, 24, .88), transparent);
+    pointer-events: none;
+}
+
+/* دکمهٔ لینک باید قابل کلیک بماند؛ ویدیو نوار کنترل خودش را در پایین دارد */
+.slide-caption a {
+    pointer-events: auto;
+}
+
+.slide:has(video) .slide-caption {
+    inset-block: 0 auto;
+    bottom: auto;
+    padding: var(--space-4) var(--space-5) 56px;
+    background: linear-gradient(to bottom, rgba(6, 10, 24, .75), transparent);
+}
+
+.slide-caption h3 {
+    margin: 0 0 4px;
+    font-size: 22px;
+}
+
+.slide-caption p {
+    margin: 0 0 var(--space-3);
+    max-width: 640px;
+    color: rgba(255, 255, 255, .86);
+}
+
+.slider-arrow {
+    position: absolute;
+    top: 50%;
+    z-index: 2;
+    width: 44px;
+    height: 44px;
+    transform: translateY(-50%);
+    display: grid;
+    place-items: center;
+    padding: 0;
+    font-size: 20px;
+    color: #fff;
+    background: rgba(10, 16, 34, .6);
+    border: 1px solid rgba(255, 255, 255, .25);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color var(--transition), border-color var(--transition);
+}
+
+.slider-arrow:hover {
+    background: var(--blue-primary);
+    border-color: var(--blue-primary);
+}
+
+.slider-arrow:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+}
+
+.slider-prev { right: var(--space-4); }
+.slider-next { left: var(--space-4); }
+
+.slider-dots {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: var(--space-4);
+}
+
+.slider-dot {
+    width: 12px;
+    height: 12px;
+    padding: 0;
+    cursor: pointer;
+    background: var(--surface-2);
+    border: 1px solid var(--border-strong);
+    border-radius: 50%;
+    transition: background-color var(--transition), transform var(--transition);
+}
+
+.slider-dot:hover {
+    transform: scale(1.2);
+}
+
+.slider-dot.active {
+    background: var(--blue-primary);
+    border-color: var(--blue-primary);
+}
+
+.slider-dot:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+}
+
+@media (max-width: 640px) {
+    .slider-viewport {
+        aspect-ratio: 4 / 3;
+        border-radius: var(--radius-md);
+    }
+
+    .slide-caption {
+        padding: 40px var(--space-4) var(--space-4);
+    }
+
+    .slide-caption h3 {
+        font-size: 17px;
+    }
+
+    .slide-caption p {
+        display: none;
+    }
+
+    .slider-arrow {
+        width: 36px;
+        height: 36px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .slide {
+        transition: none;
+    }
+}
+
+/* پیش‌نمایش در پنل مدیریت */
+.slide-thumb {
+    width: 96px;
+    height: 54px;
+    object-fit: cover;
+    border-radius: 8px;
+    background: #000;
+}
+
+.slide-preview {
+    display: block;
+    max-width: 100%;
+    max-height: 240px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+}

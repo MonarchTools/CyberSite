@@ -78,4 +78,65 @@
 
 </section>
 
+{% if slides %}
+<section class="home-slider" data-slider
+         aria-roledescription="carousel" aria-label="پروژه‌ها و تصاویر">
+
+    <h2 class="slider-heading">از پروژه‌ها</h2>
+
+    <div class="slider-viewport">
+        {% for slide in slides %}
+            <figure class="slide{{ ' active' if loop.first }}" data-slide
+                    aria-roledescription="slide"
+                    aria-label="{{ loop.index }} از {{ loop.length }}">
+                {% if slide.is_video %}
+                    <video src="{{ url_for('slides.media', filename=slide.filename) }}"
+                           controls playsinline preload="metadata"
+                           aria-label="{{ slide.title }}"></video>
+                {% else %}
+                    <img src="{{ url_for('slides.media', filename=slide.filename) }}"
+                         alt="{{ slide.title }}"
+                         loading="{{ 'eager' if loop.first else 'lazy' }}">
+                {% endif %}
+
+                <figcaption class="slide-caption">
+                    <h3>{{ slide.title }}</h3>
+                    {% if slide.caption %}<p>{{ slide.caption }}</p>{% endif %}
+                    {% if slide.safe_link %}
+                        <a class="btn-secondary" href="{{ slide.safe_link }}"
+                           {% if slide.link_is_external %}target="_blank" rel="noopener noreferrer"{% endif %}>
+                            مشاهده
+                        </a>
+                    {% endif %}
+                </figcaption>
+            </figure>
+        {% endfor %}
+
+        {% if slides|length > 1 %}
+            <button class="slider-arrow slider-prev" type="button" data-slider-prev
+                    aria-label="اسلاید قبلی">→</button>
+            <button class="slider-arrow slider-next" type="button" data-slider-next
+                    aria-label="اسلاید بعدی">←</button>
+        {% endif %}
+    </div>
+
+    {% if slides|length > 1 %}
+        <div class="slider-dots">
+            {% for slide in slides %}
+                <button type="button" class="slider-dot{{ ' active' if loop.first }}"
+                        data-slider-dot="{{ loop.index0 }}"
+                        aria-label="رفتن به اسلاید {{ loop.index }}"></button>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+</section>
+{% endif %}
+
+{% endblock %}
+
+{% block page_js %}
+{% if slides and slides|length > 0 %}
+<script src="{{ url_for('static', filename='js/slider.js') }}"></script>
+{% endif %}
 {% endblock %}

@@ -57,6 +57,11 @@
     transition: color var(--transition), border-color var(--transition);
 }
 
+.nav-links a.active {
+    color: var(--blue-neon);
+    border-bottom-color: var(--blue-neon);
+}
+
 .nav-links a:hover {
     color: var(--text-primary);
     border-bottom-color: var(--blue-neon);

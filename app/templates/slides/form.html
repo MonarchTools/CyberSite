@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} | CyberSite{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/products.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/shop.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/home.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="product-form-page shop-page">
+
+    <div class="product-form-card">
+        <p class="admin-label">CYBERSITE / SLIDE</p>
+        <h1>{{ page_title }}</h1>
+
+        {% include "components/flashes.html" %}
+
+        <form method="POST" enctype="multipart/form-data" novalidate>
+            {{ form.hidden_tag() }}
+
+            <div class="admin-form-group">
+                {{ form.title.label }}
+                {{ form.title(class="admin-input", placeholder="مثلاً: فروشگاه آنلاین") }}
+                {% for error in form.title.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+            </div>
+
+            <div class="admin-form-group">
+                {{ form.caption.label }}
+                {{ form.caption(class="admin-input", placeholder="یک جملهٔ کوتاه دربارهٔ پروژه") }}
+                {% for error in form.caption.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+            </div>
+
+            <div class="admin-form-group">
+                {{ form.link_url.label }}
+                {{ form.link_url(class="admin-input", dir="ltr", placeholder="/blog/ یا https://example.com") }}
+                <small>مسیر صفحه‌ای از همین سایت (با /) یا آدرس https. خالی بگذارید تا دکمه‌ای نمایش داده نشود.</small>
+                {% for error in form.link_url.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+            </div>
+
+            <div class="admin-form-group">
+                {{ form.media.label }}
+                {{ form.media(class="admin-input", accept="image/png,image/jpeg,image/webp,video/mp4,video/webm") }}
+                <small>عکس (JPG، PNG، WEBP) یا ویدیوی کوتاه (MP4 یا WEBM، حداکثر ۲۰ مگابایت). نسبت ۱۶:۹ بهترین نمایش را دارد.{% if slide %} برای نگه‌داشتن فایل فعلی خالی بگذارید.{% endif %}</small>
+                {% for error in form.media.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+            </div>
+
+            {% if slide %}
+                <div class="admin-form-group">
+                    <p>فایل فعلی:</p>
+                    {% if slide.is_video %}
+                        <video class="slide-preview" controls preload="metadata"
+                               src="{{ url_for('slides.media', filename=slide.filename) }}"></video>
+                    {% else %}
+                        <img class="slide-preview"
+                             src="{{ url_for('slides.media', filename=slide.filename) }}" alt="">
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            <div class="admin-form-group">
+                <label class="filter-check">
+                    {{ form.is_active() }} {{ form.is_active.label.text }}
+                </label>
+            </div>
+
+            {{ form.submit(class="store-button") }}
+        </form>
+
+        <a class="admin-back" href="{{ url_for('slides.manage_slides') }}">بازگشت به اسلایدها</a>
+    </div>
+
+</section>
+{% endblock %}

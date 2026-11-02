@@ -49,6 +49,8 @@ def create_app(config_class=Config):
     from app.modules.admin.routes import admin_bp
     from app.modules.contact.routes import contact_bp
     from app.modules.shop.routes import shop_bp
+    from app.modules.slides.routes import slides_bp
+    from app.modules.slides import models as _slide_models  # noqa: F401 - برای create_all
     from app.modules.shop.services import cart_count
     from app.utils import format_rial
 
@@ -58,6 +60,7 @@ def create_app(config_class=Config):
     app.register_blueprint(admin_bp)
     app.register_blueprint(contact_bp)
     app.register_blueprint(shop_bp)
+    app.register_blueprint(slides_bp)
 
     app.jinja_env.filters["rial"] = format_rial
 

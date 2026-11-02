@@ -1,0 +1,93 @@
+/* صفحهٔ «درباره من» */
+
+.about {
+    max-width: 980px;
+    margin: var(--space-7) auto 80px;
+}
+
+.about-intro h1 {
+    margin: 8px 0 var(--space-4);
+}
+
+.about-intro p:not(.admin-label) {
+    max-width: 720px;
+    color: var(--text-secondary);
+    line-height: 2.1;
+}
+
+.about-intro a,
+.about-note a {
+    color: var(--blue-neon);
+}
+
+.about-topics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-4);
+    margin: var(--space-6) 0 var(--space-7);
+}
+
+.about-heading {
+    margin-bottom: var(--space-4);
+    font-size: 22px;
+}
+
+.social-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-4);
+}
+
+.social-card {
+    display: grid;
+    justify-items: start;
+    gap: 6px;
+    padding: var(--space-5);
+    color: var(--text-primary);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    transition: transform var(--transition), border-color var(--transition),
+                box-shadow var(--transition);
+}
+
+.social-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--blue-primary);
+    box-shadow: var(--shadow-blue);
+}
+
+.social-card:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+}
+
+.social-card span {
+    color: var(--text-secondary);
+    font-size: 14px;
+    overflow-wrap: anywhere;
+}
+
+.social-icon {
+    width: 34px;
+    height: 34px;
+    margin-bottom: 6px;
+    color: var(--blue-neon);
+}
+
+.about-note {
+    margin-top: var(--space-5);
+    color: var(--text-secondary);
+}
+
+@media (max-width: 800px) {
+    .about-topics,
+    .social-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.about-topics .feature-card span {
+    color: var(--blue-neon);
+    font-size: 22px;
+}

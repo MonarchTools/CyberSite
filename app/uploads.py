@@ -19,6 +19,8 @@ MAX_PIXELS = 25_000_000
 MAX_SIDE = 1600
 
 STORED_NAME = re.compile(r"^[a-f0-9]{32}\.webp$")
+STORED_MEDIA_NAME = re.compile(r"^[a-f0-9]{32}\.(?:webp|mp4|webm)$")
+VIDEO_CHUNK = 1024 * 1024
 
 
 def upload_folder(name):
@@ -84,6 +86,90 @@ def save_image(file, folder_name):
         raise ValueError("فایل انتخاب‌شده تصویر معتبر نیست.")
 
     return filename
+
+
+def is_stored_media_name(filename):
+    return bool(filename) and bool(STORED_MEDIA_NAME.fullmatch(filename))
+
+
+def sniff_video(file):
+    """نوع واقعی ویدیو را از بایت‌های ابتدای فایل تشخیص می‌دهد: 'mp4'، 'webm' یا None."""
+    stream = file.stream
+    stream.seek(0)
+    head = stream.read(12)
+    stream.seek(0)
+
+    if len(head) >= 12 and head[4:8] == b"ftyp":
+        return "mp4"
+
+    if head[:4] == b"\x1a\x45\xdf\xa3":
+        return "webm"
+
+    return None
+
+
+def save_video(file, folder_name, max_bytes):
+    """ویدیوی MP4 یا WEBM را (پس از بررسی بایت‌های ابتدایی و حجم) ذخیره می‌کند.
+
+    ویدیو بازکدگذاری نمی‌شود؛ پس فقط با نام تصادفی و نوع محتوای ثابت سرو می‌شود.
+    پسوند را خود برنامه از روی محتوای واقعی تعیین می‌کند، نه نام فایل کاربر.
+    """
+    kind = sniff_video(file)
+
+    if kind is None:
+        raise ValueError("فقط ویدیوی MP4 یا WEBM مجاز است.")
+
+    filename = f"{uuid4().hex}.{kind}"
+    path = upload_folder(folder_name) / filename
+    written = 0
+
+    try:
+        with open(path, "wb") as target:
+            while True:
+                chunk = file.stream.read(VIDEO_CHUNK)
+
+                if not chunk:
+                    break
+
+                written += len(chunk)
+
+                if written > max_bytes:
+                    raise ValueError(
+                        f"حجم ویدیو بیش از {max_bytes // (1024 * 1024)} مگابایت است."
+                    )
+
+                target.write(chunk)
+
+    except BaseException:
+        path.unlink(missing_ok=True)
+        raise
+
+    if written == 0:
+        path.unlink(missing_ok=True)
+        raise ValueError("فایل ویدیو خالی است.")
+
+    return filename
+
+
+def save_media(file, folder_name, max_video_bytes):
+    """عکس یا ویدیو؛ برمی‌گرداند (نام فایل، 'image' یا 'video')."""
+    if not file or not getattr(file, "filename", ""):
+        return None, None
+
+    if sniff_video(file):
+        return save_video(file, folder_name, max_video_bytes), "video"
+
+    return save_image(file, folder_name), "image"
+
+
+def remove_media(filename, folder_name):
+    if not is_stored_media_name(filename):
+        return
+
+    path = upload_folder(folder_name) / filename
+
+    if path.is_symlink() or path.is_file():
+        path.unlink()
 
 
 def remove_image(filename, folder_name):
