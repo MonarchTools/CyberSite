@@ -3,7 +3,8 @@
 import secrets
 from datetime import timedelta
 
-from flask import request
+from flask import abort, request
+from flask_login import current_user
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 
@@ -86,6 +87,15 @@ def init_security(app):
             x_proto=proxies,
             x_host=proxies,
         )
+
+    @app.before_request
+    def limit_anonymous_body():
+        # آپلودهای بزرگ فقط برای مدیر واردشده؛ بقیه فرم‌ها کوچک‌اند
+        limit = app.config.get("ANONYMOUS_MAX_BODY_BYTES")
+        size = request.content_length
+
+        if limit and size and size > limit and not current_user.is_authenticated:
+            abort(413)
 
     @app.after_request
     def set_security_headers(response):

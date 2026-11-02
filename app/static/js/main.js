@@ -63,3 +63,25 @@ document.addEventListener("click", (event) => {
         // ذخیره نشد؛ فقط برای همین صفحه اعمال می‌شود
     }
 });
+
+
+// گالری محصول: کلیک روی عکس کوچک، عکس اصلی را عوض می‌کند
+document.addEventListener("click", (event) => {
+    const thumb = event.target.closest("[data-gallery-thumb]");
+
+    if (!thumb) {
+        return;
+    }
+
+    const main = document.getElementById("product-main-image");
+
+    if (main && thumb.dataset.full) {
+        main.src = thumb.dataset.full;
+    }
+
+    document.querySelectorAll("[data-gallery-thumb].active").forEach((item) => {
+        item.classList.remove("active");
+    });
+
+    thumb.classList.add("active");
+});

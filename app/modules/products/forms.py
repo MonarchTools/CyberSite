@@ -1,6 +1,6 @@
 ﻿
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileField, FileAllowed
+from flask_wtf.file import FileField, FileAllowed, MultipleFileField
 from wtforms import (
     StringField,
     TextAreaField,
@@ -63,6 +63,12 @@ class ProductForm(FlaskForm):
                 "فقط تصاویر JPG، PNG و WEBP مجاز هستند."
             )
         ]
+    )
+
+    # نوع واقعی فایل‌ها هنگام ذخیره با Pillow بررسی می‌شود
+    gallery = MultipleFileField(
+        "تصاویر بیشتر (اختیاری)",
+        validators=[Optional()]
     )
 
     submit = SubmitField("ذخیره محصول")

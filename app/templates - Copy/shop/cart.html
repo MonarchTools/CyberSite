@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}سبد خرید | CyberSite{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/admin.css') }}">
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/products.css') }}">
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/shop.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="public-store shop-page">
+
+    <div class="store-header">
+        <div>
+            <p class="admin-label">CYBERSITE / CART</p>
+            <h1>سبد خرید</h1>
+        </div>
+
+        <a class="store-button" href="{{ url_for('products.index') }}">
+            ادامهٔ خرید
+        </a>
+    </div>
+
+    {% include "components/flashes.html" %}
+
+    {% if lines %}
+        <div class="shop-card">
+            <div class="product-table-wrap">
+                <table class="product-table cart-table">
+                    <thead>
+                        <tr>
+                            <th>محصول</th>
+                            <th>قیمت واحد</th>
+                            <th>تعداد</th>
+                            <th>جمع</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for line in lines %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('products.detail', product_id=line.product.id) }}">
+                                        {{ line.product.title }}
+                                    </a>
+                                    {% if line.issue %}
+                                        <small class="form-error cart-issue">
+                                            {{ line.issue }}
+                                        </small>
+                                    {% endif %}
+                                </td>
+
+                                <td>{{ line.unit_price|rial }}</td>
+
+                                <td>
+                                    <form method="POST"
+                                          class="qty-form"
+                                          action="{{ url_for('shop.cart_update', product_id=line.product.id) }}">
+                                        <input type="hidden" name="csrf_token"
+                                               value="{{ csrf_token() }}">
+                                        <input class="admin-input qty-input"
+                                               type="number"
+                                               name="quantity"
+                                               min="0"
+                                               value="{{ line.quantity }}"
+                                               inputmode="numeric"
+                                               aria-label="تعداد">
+                                        <button class="store-button small" type="submit">
+                                            به‌روزرسانی
+                                        </button>
+                                    </form>
+                                </td>
+
+                                <td>{{ line.line_total|rial }}</td>
+
+                                <td>
+                                    <form method="POST"
+                                          action="{{ url_for('shop.cart_remove', product_id=line.product.id) }}">
+                                        <input type="hidden" name="csrf_token"
+                                               value="{{ csrf_token() }}">
+                                        <button class="delete-button" type="submit">
+                                            حذف
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="cart-summary">
+                <div>
+                    <span>جمع کل</span>
+                    <strong>{{ total|rial }}</strong>
+                </div>
+
+                {% if has_issue %}
+                    <p class="form-error">
+                        ابتدا مشکل اقلام علامت‌دار را برطرف کنید.
+                    </p>
+                {% elif total < min_payment %}
+                    <p class="form-error">
+                        حداقل مبلغ سفارش {{ min_payment|rial }} است.
+                    </p>
+                {% else %}
+                    <a class="store-button"
+                       href="{{ url_for('shop.checkout') }}">
+                        ادامه و ثبت سفارش
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <p class="empty-state">سبد خرید شما خالی است.</p>
+    {% endif %}
+
+</section>
+{% endblock %}

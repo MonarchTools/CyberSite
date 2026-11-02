@@ -10,6 +10,7 @@
     **پررنگ**   *مورب*   `کد`   [متن](https://example.com)
     - مورد لیست        1. مورد لیست شماره‌دار
     > نقل‌قول
+    ![توضیح عکس](/blog/image/<نام-فایل>.webp)     (فقط عکس‌هایی که برای همین سایت آپلود شده‌اند)
     ```
     بلوک کد
     ```
@@ -31,6 +32,10 @@ _HEADING = re.compile(r"^(#{1,3})\s+(.+)$")
 _UNORDERED = re.compile(r"^[-*]\s+(.*)$")
 _ORDERED = re.compile(r"^\d{1,3}[.)]\s+(.*)$")
 _QUOTE = re.compile(r"^>\s?(.*)$")
+
+# عکس فقط از مسیر آپلودهای خود سایت با نام تولیدشده پذیرفته می‌شود؛
+# هر آدرس دیگری (از جمله سایت خارجی) عکس حساب نمی‌شود و متن ساده می‌ماند.
+_IMAGE = re.compile(r"^!\[([^\]\n]{0,200})\]\((/blog/image/[a-f0-9]{32}\.webp)\)$")
 
 _CODE_SPAN = re.compile(r"`([^`\n]+)`")
 _LINK = re.compile(r"\[([^\]\n]+)\]\(([^)\s]+)\)")
@@ -136,6 +141,15 @@ def render_body(text):
 
         if not stripped:
             flush()
+        elif _IMAGE.match(stripped):
+            flush()
+            image = _IMAGE.match(stripped)
+            alt = str(escape(image.group(1).strip()))
+            output.append(
+                f'<figure class="post-inline-image">'
+                f'<img src="{image.group(2)}" alt="{alt}" loading="lazy">'
+                f"</figure>"
+            )
         elif _HEADING.match(stripped):
             # عنوان بدون نیاز به خط خالی دور آن، بلوک مستقل است
             flush()

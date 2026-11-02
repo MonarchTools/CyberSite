@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}مدیریت وبلاگ | CyberSite{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/products.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/shop.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/posts.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="store-admin shop-page">
+
+    <div class="store-header">
+        <div>
+            <p class="admin-label">CYBERSITE / BLOG CONTROL</p>
+            <h1>مدیریت وبلاگ</h1>
+        </div>
+
+        <div class="header-actions">
+            <a class="store-button" href="{{ url_for('blog.create_post') }}">+ پست جدید</a>
+            <a class="store-button" href="{{ url_for('admin.index') }}">داشبورد</a>
+        </div>
+    </div>
+
+    {% include "components/flashes.html" %}
+
+    <div class="products-panel">
+        <div class="product-table-wrap">
+            <table class="product-table">
+                <thead>
+                    <tr>
+                        <th>تصویر</th>
+                        <th>عنوان</th>
+                        <th>آدرس</th>
+                        <th>وضعیت</th>
+                        <th>تاریخ</th>
+                        <th>عملیات</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for post in posts %}
+                        <tr>
+                            <td>
+                                {% if post.cover_image %}
+                                    <img class="product-thumb"
+                                         src="{{ url_for('blog.cover_image', filename=post.cover_image) }}"
+                                         alt="" loading="lazy">
+                                {% else %}
+                                    <span class="muted-dash">—</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ post.title }}</td>
+                            <td dir="ltr">{{ post.slug }}</td>
+                            <td>
+                                {% if post.is_published %}
+                                    <span class="status-badge status-paid">منتشرشده</span>
+                                {% else %}
+                                    <span class="status-badge">پیش‌نویس</span>
+                                {% endif %}
+                            </td>
+                            <td dir="ltr">{{ post.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td class="product-actions">
+                                <a href="{{ url_for('blog.detail', slug=post.slug) }}">نمایش</a>
+                                <a href="{{ url_for('blog.edit_post', post_id=post.id) }}">ویرایش</a>
+
+                                <form method="POST"
+                                      action="{{ url_for('blog.delete_post', post_id=post.id) }}"
+                                      data-confirm="از حذف این پست مطمئن هستید؟">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button class="delete-button" type="submit">حذف</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="6">هنوز پستی ساخته نشده است.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if pagination.pages > 1 %}
+        <nav class="pagination" aria-label="صفحه‌بندی">
+            {% if pagination.has_prev %}
+                <a href="{{ url_for('blog.manage_posts', page=pagination.prev_num) }}">قبلی</a>
+            {% endif %}
+
+            <span class="current">{{ pagination.page }} / {{ pagination.pages }}</span>
+
+            {% if pagination.has_next %}
+                <a href="{{ url_for('blog.manage_posts', page=pagination.next_num) }}">بعدی</a>
+            {% endif %}
+        </nav>
+    {% endif %}
+
+</section>
+{% endblock %}

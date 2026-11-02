@@ -40,6 +40,15 @@ class Post(db.Model):
     )
     published_at = db.Column(db.DateTime, nullable=True, index=True)
 
+    # عکس‌های داخل متن (آپلودشده برای همین پست)
+    body_images = db.relationship(
+        "PostImage",
+        back_populates="post",
+        cascade="all, delete-orphan",
+        order_by="PostImage.id",
+        lazy="selectin"
+    )
+
     @property
     def summary(self):
         """خلاصهٔ متنی برای کارت و meta description (فقط متن ساده)."""
@@ -51,3 +60,21 @@ class Post(db.Model):
         text = " ".join(text.split())
 
         return text if len(text) <= 160 else text[:157].rstrip() + "…"
+
+
+class PostImage(db.Model):
+    __tablename__ = "post_images"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    post_id = db.Column(
+        db.Integer,
+        db.ForeignKey("posts.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+
+    # نام تولیدشدهٔ برنامه (۳۲ رقم hex + .webp)
+    filename = db.Column(db.String(64), nullable=False)
+
+    post = db.relationship("Post", back_populates="body_images")

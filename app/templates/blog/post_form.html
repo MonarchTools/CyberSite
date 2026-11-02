@@ -67,6 +67,30 @@
             </div>
 
             <div class="admin-form-group">
+                {{ form.images.label }}
+                {{ form.images(class="admin-input", multiple=True, accept="image/png,image/jpeg,image/webp") }}
+                <small>تا ۱۲ عکس. بعد از ذخیره، کد درج هر عکس همین‌جا نمایش داده می‌شود؛ آن را در جای دلخواه متن بچسبانید.</small>
+                {% for error in form.images.errors %}
+                    <small class="form-error">{{ error }}</small>
+                {% endfor %}
+
+                {% if post and post.body_images %}
+                    <ul class="body-images">
+                        {% for image in post.body_images %}
+                            <li>
+                                <img src="{{ url_for('blog.cover_image', filename=image.filename) }}" alt="">
+                                <code dir="ltr">![توضیح عکس]({{ url_for('blog.cover_image', filename=image.filename) }})</code>
+                                <label class="filter-check">
+                                    <input type="checkbox" name="delete_body_image" value="{{ image.id }}">
+                                    حذف
+                                </label>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <div class="admin-form-group">
                 {{ form.body.label }}
                 {{ form.body(class="admin-input post-editor", rows="18") }}
                 {% for error in form.body.errors %}
@@ -82,6 +106,7 @@
 - مورد لیست
 1. مورد شماره‌دار
 &gt; نقل‌قول
+![توضیح عکس](/blog/image/…)   (کد را از بخش عکس‌ها کپی کنید)
 ```
 بلوک کد
 ```</pre>

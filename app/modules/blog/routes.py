@@ -1,6 +1,12 @@
+import re
+from email.utils import format_datetime
+from xml.sax.saxutils import escape as _xml_escape
+
+from datetime import timezone
+
 from flask import (
-    Blueprint, abort, flash, redirect, render_template, request,
-    send_from_directory, url_for
+    Blueprint, Response, abort, current_app, flash, redirect,
+    render_template, request, send_from_directory, url_for
 )
 from flask_login import current_user, login_required
 from markupsafe import Markup
@@ -8,7 +14,8 @@ from markupsafe import Markup
 from app.extensions import db
 from app.modules.blog.forms import PostForm
 from app.modules.blog.markup import render_body
-from app.modules.blog.models import Post
+from app.modules.blog.models import Post, PostImage
+from sqlalchemy import or_
 from app.modules.blog.slugs import RESERVED, slugify
 from app.uploads import (
     is_stored_name, remove_image, save_image, upload_folder
@@ -25,6 +32,8 @@ blog_bp = Blueprint(
 PUBLIC_PER_PAGE = 6
 COVER_FOLDER = "blog"
 ADMIN_PER_PAGE = 20
+MAX_BODY_IMAGES = 12
+FEED_LIMIT = 20
 
 
 @blog_bp.app_template_filter("post_body")
@@ -84,19 +93,95 @@ def _resolve_slug(form, post):
 
 # ------------------------------------------------------------ بخش عمومی
 
+def _escape_like(text):
+    return (
+        text.replace("\\", "\\\\")
+        .replace("%", "\\%")
+        .replace("_", "\\_")
+    )
+
+
 @blog_bp.route("/")
 def index():
-    pagination = Post.query.filter(
-        Post.is_published.is_(True)
-    ).order_by(
+    search = request.args.get("q", "").strip()[:80]
+
+    query = Post.query.filter(Post.is_published.is_(True))
+
+    if search:
+        pattern = f"%{_escape_like(search)}%"
+        query = query.filter(
+            or_(
+                Post.title.ilike(pattern, escape="\\"),
+                Post.excerpt.ilike(pattern, escape="\\"),
+                Post.body.ilike(pattern, escape="\\"),
+            )
+        )
+
+    pagination = query.order_by(
         Post.published_at.desc(), Post.id.desc()
     ).paginate(page=_page(), per_page=PUBLIC_PER_PAGE, error_out=False)
 
     return render_template(
         "blog/list.html",
         posts=pagination.items,
-        pagination=pagination
+        pagination=pagination,
+        search=search
     )
+
+
+@blog_bp.route("/feed.xml")
+def feed():
+    """RSS 2.0 از آخرین پست‌های منتشرشده."""
+    base = (current_app.config.get("SITE_URL") or request.url_root).rstrip("/")
+
+    posts = Post.query.filter(
+        Post.is_published.is_(True)
+    ).order_by(
+        Post.published_at.desc(), Post.id.desc()
+    ).limit(FEED_LIMIT).all()
+
+    def xml_escape(text):
+        # نویسه‌های کنترلی در XML مجاز نیستند و کل فید را خراب می‌کنند
+        return _xml_escape(re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", "", str(text)))
+
+    def rfc822(moment):
+        return format_datetime(moment.replace(tzinfo=timezone.utc))
+
+    items = []
+
+    for post in posts:
+        link = f"{base}{url_for('blog.detail', slug=post.slug)}"
+        stamp = post.published_at or post.created_at
+
+        items.append(
+            "<item>"
+            f"<title>{xml_escape(post.title)}</title>"
+            f"<link>{xml_escape(link)}</link>"
+            f'<guid isPermaLink="true">{xml_escape(link)}</guid>'
+            f"<pubDate>{rfc822(stamp)}</pubDate>"
+            f"<description>{xml_escape(post.summary)}</description>"
+            "</item>"
+        )
+
+    updated = rfc822(posts[0].published_at or posts[0].created_at) if posts else None
+    home = f"{base}{url_for('blog.index')}"
+
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<rss version="2.0"><channel>'
+        "<title>وبلاگ CyberSite</title>"
+        f"<link>{xml_escape(home)}</link>"
+        "<description>آخرین نوشته‌های وبلاگ CyberSite</description>"
+        "<language>fa</language>"
+        + (f"<lastBuildDate>{updated}</lastBuildDate>" if updated else "")
+        + "".join(items)
+        + "</channel></rss>"
+    )
+
+    response = Response(xml, mimetype="application/rss+xml")
+    response.headers["Cache-Control"] = "public, max-age=600"
+
+    return response
 
 
 @blog_bp.route("/<slug>")
@@ -143,6 +228,34 @@ def manage_posts():
     )
 
 
+def _apply_body_images(form, post, saved, removed):
+    """حذف عکس‌های علامت‌خورده و افزودن عکس‌های تازهٔ داخل متن."""
+    wanted = {
+        int(raw) for raw in request.form.getlist("delete_body_image")
+        if raw.isdigit()
+    }
+
+    for image in list(post.body_images):
+        if image.id in wanted:
+            removed.append(image.filename)
+            post.body_images.remove(image)
+
+    files = [
+        f for f in (form.images.data or [])
+        if f and getattr(f, "filename", "")
+    ]
+
+    if len(post.body_images) + len(files) > MAX_BODY_IMAGES:
+        raise ValueError(
+            f"هر پست حداکثر {MAX_BODY_IMAGES} عکس داخل متن می‌تواند داشته باشد."
+        )
+
+    for file in files:
+        name = save_image(file, COVER_FOLDER)
+        saved.append(name)
+        post.body_images.append(PostImage(filename=name))
+
+
 def _save(form, post):
     slug, error = _resolve_slug(form, post)
 
@@ -157,6 +270,8 @@ def _save(form, post):
         return None
 
     creating = post is None
+    saved_images = []
+    removed_images = []
 
     if creating:
         post = Post()
@@ -176,6 +291,20 @@ def _save(form, post):
     elif drop_cover:
         post.cover_image = None
 
+    try:
+        _apply_body_images(form, post, saved_images, removed_images)
+    except ValueError as error:
+        form.images.errors.append(str(error))
+        remove_image(new_cover, COVER_FOLDER)
+
+        for name in saved_images:
+            remove_image(name, COVER_FOLDER)
+
+        # تغییرات نیمه‌کارهٔ پست (عنوان، حذف عکس‌ها و ...) نباید در نشست بماند
+        db.session.rollback()
+
+        return None
+
     if post.is_published and post.published_at is None:
         post.published_at = utcnow_naive()
 
@@ -184,11 +313,18 @@ def _save(form, post):
     except Exception:
         db.session.rollback()
         remove_image(new_cover, COVER_FOLDER)
+
+        for name in saved_images:
+            remove_image(name, COVER_FOLDER)
+
         raise
 
     # فایل قدیمی فقط بعد از موفقیت ذخیره حذف می‌شود
     if old_cover and (new_cover or drop_cover):
         remove_image(old_cover, COVER_FOLDER)
+
+    for name in removed_images:
+        remove_image(name, COVER_FOLDER)
 
     return post
 
@@ -241,11 +377,15 @@ def delete_post(post_id):
         abort(404)
 
     cover = post.cover_image
+    inline = [image.filename for image in post.body_images]
 
     db.session.delete(post)
     db.session.commit()
 
     remove_image(cover, COVER_FOLDER)
+
+    for name in inline:
+        remove_image(name, COVER_FOLDER)
 
     flash("پست حذف شد.", "success")
     return redirect(url_for("blog.manage_posts"))

@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileAllowed, FileField
+from flask_wtf.file import FileAllowed, FileField, MultipleFileField
 from wtforms import (
     BooleanField, StringField, SubmitField, TextAreaField
 )
@@ -49,6 +49,11 @@ class PostForm(FlaskForm):
     )
 
     remove_cover = BooleanField("حذف تصویر فعلی")
+
+    images = MultipleFileField(
+        "عکس‌های داخل متن (اختیاری)",
+        validators=[Optional()]
+    )
 
     is_published = BooleanField("منتشر شود")
 

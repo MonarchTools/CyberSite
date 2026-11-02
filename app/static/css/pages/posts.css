@@ -240,3 +240,76 @@
 .muted-dash {
     color: var(--muted);
 }
+
+/* ---------- جستجو و عکس داخل متن ---------- */
+
+.blog-search {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 var(--space-5);
+}
+
+.blog-search .admin-input {
+    flex: 1 1 260px;
+    margin: 0;
+}
+
+.blog-search .filter-reset {
+    grid-column: auto;
+}
+
+.rss-link {
+    margin-inline-start: auto;
+    padding: 4px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    color: var(--blue-neon);
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.post-inline-image {
+    margin: 24px 0;
+}
+
+.post-inline-image img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin-inline: auto;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+}
+
+.body-images {
+    display: grid;
+    gap: 12px;
+    list-style: none;
+    margin: 14px 0 0;
+    padding: 0;
+}
+
+.body-images li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+}
+
+.body-images img {
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.body-images code {
+    flex: 1 1 260px;
+    overflow-wrap: anywhere;
+    user-select: all;
+}

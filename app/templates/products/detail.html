@@ -29,9 +29,28 @@
     <article class="product-detail">
 
         <div class="product-detail-media">
-            {% if product.image_filename %}
-                <img src="{{ url_for('products.product_image', filename=product.image_filename) }}"
+            {% set images = product.image_names %}
+            {% if images %}
+                <img id="product-main-image"
+                     src="{{ url_for('products.product_image', filename=images[0]) }}"
                      alt="{{ product.title }}">
+
+                {% if images|length > 1 %}
+                    <ul class="gallery-thumbs" aria-label="تصاویر محصول">
+                        {% for name in images %}
+                            <li>
+                                <button type="button"
+                                        class="gallery-thumb{{ ' active' if loop.first }}"
+                                        data-gallery-thumb
+                                        data-full="{{ url_for('products.product_image', filename=name) }}"
+                                        aria-label="نمایش تصویر {{ loop.index }}">
+                                    <img src="{{ url_for('products.product_image', filename=name) }}"
+                                         alt="" loading="lazy">
+                                </button>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
             {% else %}
                 <div class="product-no-image product-no-image-large">
                     CYBER PRODUCT

@@ -23,7 +23,10 @@ class Config:
         "DATABASE_URL",
         "sqlite:///cybersite.db"
     )
-    MAX_CONTENT_LENGTH = 5 * 1024 * 1024
+    # سقف کل یک درخواست (مدیر می‌تواند چند عکس را با هم بفرستد).
+    # بازدیدکنندهٔ بدون ورود فقط تا ANONYMOUS_MAX_BODY_BYTES اجازه دارد.
+    MAX_CONTENT_LENGTH = 24 * 1024 * 1024
+    ANONYMOUS_MAX_BODY_BYTES = 512 * 1024
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # --- فروشگاه ---

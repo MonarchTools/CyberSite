@@ -26,6 +26,7 @@
         href="{{ url_for('static', filename='css/components.css') }}">
 
     {% block page_css %}{% endblock %}
+    {% block head_extra %}{% endblock %}
 
     <link rel="stylesheet"
         href="{{ url_for('static', filename='css/responsive.css') }}">

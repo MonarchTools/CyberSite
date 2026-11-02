@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}تماس با من | CyberSite{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/products.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/shop.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="public-store shop-page">
+
+    <div class="store-header">
+        <div>
+            <p class="admin-label">CYBERSITE / CONTACT</p>
+            <h1>تماس با من</h1>
+            <p>پیام خود را بنویسید؛ در اسرع وقت بررسی می‌شود.</p>
+        </div>
+    </div>
+
+    {% include "components/flashes.html" %}
+
+    <div class="contact-layout">
+
+        <form method="POST"
+              action="{{ url_for('contact.index') }}"
+              class="shop-card"
+              novalidate>
+            {{ form.hidden_tag() }}
+
+            {% for field in (form.name, form.email, form.phone, form.subject) %}
+                <div class="admin-form-group">
+                    {{ field.label }}
+                    {{ field(class="admin-input") }}
+                    {% for error in field.errors %}
+                        <small class="form-error">{{ error }}</small>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+
+            <div class="admin-form-group">
+                {{ form.message.label }}
+                {{ form.message(class="admin-input", rows="6", maxlength="2000") }}
+                {% for error in form.message.errors %}
+                    <small class="form-error">{{ error }}</small>
+                {% endfor %}
+            </div>
+
+            <div class="hp-field" aria-hidden="true">
+                {{ form.website.label }}
+                {{ form.website(tabindex="-1", autocomplete="off") }}
+            </div>
+
+            <div class="admin-form-group">
+                {{ form.captcha.label }}
+
+                <div class="captcha-box">
+                    <img src="{{ url_for('contact.captcha') }}"
+                         alt="تصویر کد امنیتی"
+                         width="200" height="70"
+                         class="captcha-image"
+                         data-captcha-image>
+
+                    <button type="button"
+                            class="captcha-refresh"
+                            data-captcha-refresh
+                            aria-label="دریافت کد امنیتی جدید">
+                        ↻ تصویر جدید
+                    </button>
+                </div>
+
+                {{ form.captcha(
+                    class="admin-input captcha-input",
+                    placeholder="کد داخل تصویر را وارد کنید",
+                    autocomplete="off",
+                    autocapitalize="characters",
+                    spellcheck="false",
+                    maxlength="9",
+                    dir="ltr"
+                ) }}
+                {% for error in form.captcha.errors %}
+                    <small class="form-error">{{ error }}</small>
+                {% endfor %}
+            </div>
+
+            {{ form.submit(class="store-button") }}
+        </form>
+
+        <aside class="shop-card contact-aside">
+            <h2>قبل از ارسال</h2>
+            <p>
+                ایمیل خود را درست وارد کنید تا بتوانم پاسخ بدهم.
+                اطلاعات شما فقط برای پاسخ‌گویی نگه‌داری می‌شود.
+            </p>
+        </aside>
+
+    </div>
+
+</section>
+{% endblock %}

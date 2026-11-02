@@ -14,8 +14,9 @@ from sqlalchemy.orm import joinedload
 from werkzeug.utils import secure_filename
 
 from app.extensions import db
-from app.modules.products.models import Product, Category
+from app.modules.products.models import Product, ProductImage, Category
 from app.modules.products.forms import ProductForm, CategoryForm
+from app.uploads import remove_image, save_image
 
 
 products_bp = Blueprint(
@@ -109,6 +110,37 @@ def remove_product_image(filename):
     # اگر فایل یا لینک نمادین وجود داشته باشد، فقط همان ورودی حذف می‌شود
     if path.is_symlink() or path.is_file():
         path.unlink()
+
+GALLERY_FOLDER = "products"
+MAX_GALLERY_IMAGES = 8
+
+
+def add_gallery_images(product, files, saved, keep=0):
+    """تصاویر گالری را ذخیره و به محصول وصل می‌کند.
+
+    نام هر فایل ذخیره‌شده فوراً در ``saved`` ثبت می‌شود تا در صورت خطا پاک شود.
+    ``keep`` تعداد تصاویر موجودی است که می‌مانند (برای رعایت سقف).
+    """
+    files = [f for f in (files or []) if f and getattr(f, "filename", "")]
+
+    if keep + len(files) > MAX_GALLERY_IMAGES:
+        raise ValueError(
+            f"هر محصول حداکثر {MAX_GALLERY_IMAGES} تصویر اضافه می‌تواند داشته باشد."
+        )
+
+    position = max((image.position for image in product.gallery), default=-1) + 1
+
+    for file in files:
+        name = save_image(file, GALLERY_FOLDER)
+        saved.append(name)
+        product.gallery.append(ProductImage(filename=name, position=position))
+        position += 1
+
+
+def remove_saved(names):
+    for name in names:
+        remove_image(name, GALLERY_FOLDER)
+
 
 SORT_OPTIONS = {
     "newest": ("جدیدترین", lambda: Product.created_at.desc()),
@@ -248,6 +280,7 @@ def create_product():
 
     if form.validate_on_submit():
         image_filename = None
+        saved_gallery = []
 
         try:
             image_filename = save_product_image(form.image.data)
@@ -260,6 +293,8 @@ def create_product():
                 category_id=form.category_id.data,
                 image_filename=image_filename
             )
+
+            add_gallery_images(product, form.gallery.data, saved_gallery)
 
             db.session.add(product)
             db.session.commit()
@@ -274,6 +309,7 @@ def create_product():
             if image_filename:
                 remove_product_image(image_filename)
 
+            remove_saved(saved_gallery)
             flash(str(error), "danger")
 
 
@@ -284,6 +320,7 @@ def create_product():
             if image_filename:
                 remove_product_image(image_filename)
 
+            remove_saved(saved_gallery)
             current_app.logger.exception("Product creation failed")
             flash("ذخیره محصول انجام نشد.", "danger")
 
@@ -320,10 +357,28 @@ def edit_product(product_id):
     if form.validate_on_submit():
         old_image = product.image_filename
         new_image = None
+        saved_gallery = []
+        removed_gallery = []
 
         try:
             if form.image.data:
                 new_image = save_product_image(form.image.data)
+
+            # حذف تصاویر انتخاب‌شده (فقط شناسه‌های همین محصول)
+            wanted = set()
+            for raw in request.form.getlist("delete_image"):
+                if raw.isdigit():
+                    wanted.add(int(raw))
+
+            for image in list(product.gallery):
+                if image.id in wanted:
+                    removed_gallery.append(image.filename)
+                    product.gallery.remove(image)
+
+            add_gallery_images(
+                product, form.gallery.data, saved_gallery,
+                keep=len(product.gallery)
+            )
 
             product.title = form.title.data.strip()
             product.description = form.description.data
@@ -338,6 +393,8 @@ def edit_product(product_id):
 
             if new_image and old_image:
                 remove_product_image(old_image)
+
+            remove_saved(removed_gallery)
 
             flash("محصول ویرایش شد.", "success")
             return redirect(url_for("products.manage_products"))
@@ -354,6 +411,7 @@ def edit_product(product_id):
             if new_image:
                 remove_product_image(new_image)
 
+            remove_saved(saved_gallery)
             flash(str(error), "danger")
 
 
@@ -370,6 +428,7 @@ def edit_product(product_id):
             if new_image:
                 remove_product_image(new_image)
 
+            remove_saved(saved_gallery)
             current_app.logger.exception("Product update failed")
             flash("ویرایش محصول انجام نشد.", "danger")
 
@@ -390,6 +449,7 @@ def delete_product(product_id):
         abort(404)
 
     image_filename = product.image_filename
+    gallery_files = [image.filename for image in product.gallery]
 
     try:
         db.session.delete(product)
@@ -397,6 +457,8 @@ def delete_product(product_id):
 
         if image_filename:
             remove_product_image(image_filename)
+
+        remove_saved(gallery_files)
 
         flash("محصول حذف شد.", "success")
 

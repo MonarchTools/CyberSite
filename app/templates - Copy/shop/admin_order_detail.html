@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}سفارش {{ order.id }} | CyberSite{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/admin.css') }}">
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/products.css') }}">
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/shop.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="store-admin shop-page">
+
+    <div class="store-header">
+        <div>
+            <p class="admin-label">CYBERSITE / ORDER #{{ order.id }}</p>
+            <h1>سفارش {{ order.id }}</h1>
+        </div>
+
+        <span class="status-badge status-{{ order.display_status }}">
+            {{ order.display_label }}
+        </span>
+    </div>
+
+    {% include "components/flashes.html" %}
+
+    <div class="shop-card">
+        <dl class="order-meta">
+            <dt>نام</dt>
+            <dd>{{ order.full_name }}</dd>
+
+            <dt>موبایل</dt>
+            <dd dir="ltr">{{ order.phone }}</dd>
+
+            {% if order.email %}
+                <dt>ایمیل</dt>
+                <dd dir="ltr">{{ order.email }}</dd>
+            {% endif %}
+
+            {% if order.note %}
+                <dt>توضیحات مشتری</dt>
+                <dd class="pre-line">{{ order.note }}</dd>
+            {% endif %}
+
+            <dt>درگاه</dt>
+            <dd>{{ order.gateway or "—" }}</dd>
+
+            {% if order.authority %}
+                <dt>Authority</dt>
+                <dd dir="ltr">{{ order.authority }}</dd>
+            {% endif %}
+
+            {% if order.ref_id %}
+                <dt>کد پیگیری</dt>
+                <dd dir="ltr">{{ order.ref_id }}</dd>
+            {% endif %}
+
+            <dt>ثبت (UTC)</dt>
+            <dd dir="ltr">{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</dd>
+
+            {% if order.paid_at %}
+                <dt>پرداخت (UTC)</dt>
+                <dd dir="ltr">{{ order.paid_at.strftime('%Y-%m-%d %H:%M') }}</dd>
+            {% endif %}
+        </dl>
+
+        <div class="product-table-wrap">
+            <table class="product-table">
+                <thead>
+                    <tr>
+                        <th>محصول</th>
+                        <th>قیمت واحد</th>
+                        <th>تعداد</th>
+                        <th>جمع</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items %}
+                        <tr>
+                            <td>{{ item.title }}</td>
+                            <td>{{ item.unit_price_rial|rial }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>{{ item.line_total_rial|rial }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="cart-summary">
+            <div>
+                <span>مبلغ سفارش</span>
+                <strong>{{ order.total_rial|rial }}</strong>
+            </div>
+        </div>
+    </div>
+
+    {% if order.status == 'paid' %}
+        <div class="shop-card">
+            <h2 class="card-title">مرحلهٔ ارسال</h2>
+
+            <form method="POST"
+                  action="{{ url_for('shop.update_fulfillment', order_id=order.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="admin-form-group">
+                    <label for="fulfillment">مرحله</label>
+                    {{ form.fulfillment(class="admin-input") }}
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="tracking_code">کد رهگیری (برای مشتری نمایش داده می‌شود)</label>
+                    {{ form.tracking_code(class="admin-input", dir="ltr", maxlength="64") }}
+                    {% for error in form.tracking_code.errors %}
+                        <span class="field-error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="admin_note">یادداشت داخلی (فقط برای شما)</label>
+                    {{ form.admin_note(class="admin-input", rows="3", maxlength="1000") }}
+                    {% for error in form.admin_note.errors %}
+                        <span class="field-error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+
+                <button class="store-button" type="submit">ذخیرهٔ وضعیت</button>
+            </form>
+
+            {% if order.shipped_at or order.delivered_at %}
+                <dl class="order-meta">
+                    {% if order.shipped_at %}
+                        <dt>زمان ارسال (UTC)</dt>
+                        <dd dir="ltr">{{ order.shipped_at.strftime('%Y-%m-%d %H:%M') }}</dd>
+                    {% endif %}
+                    {% if order.delivered_at %}
+                        <dt>زمان تحویل (UTC)</dt>
+                        <dd dir="ltr">{{ order.delivered_at.strftime('%Y-%m-%d %H:%M') }}</dd>
+                    {% endif %}
+                </dl>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <a class="admin-back" href="{{ url_for('shop.manage_orders') }}">
+        بازگشت به سفارش‌ها
+    </a>
+
+</section>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}درگاه آزمایشی | CyberSite{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/admin.css') }}">
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/products.css') }}">
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/shop.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="public-store shop-page">
+
+    <div class="shop-card mock-pay">
+        <p class="admin-label">MOCK GATEWAY — فقط برای توسعه</p>
+        <h1>پرداخت آزمایشی</h1>
+
+        <p>مبلغ سفارش {{ order.id }}: <strong>{{ order.total_rial|rial }}</strong></p>
+        <p class="shop-note">هیچ پولی جابه‌جا نمی‌شود.</p>
+
+        <form method="POST" class="mock-pay-actions">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="store-button" type="submit"
+                    name="result" value="ok">
+                پرداخت موفق
+            </button>
+            <button class="delete-button" type="submit"
+                    name="result" value="nok">
+                لغو پرداخت
+            </button>
+        </form>
+    </div>
+
+</section>
+{% endblock %}

@@ -72,6 +72,33 @@
                 </div>
             {% endif %}
 
+            <div class="admin-form-group">
+                {{ form.gallery.label }}
+                {{ form.gallery(class="admin-input", multiple=True, accept="image/png,image/jpeg,image/webp") }}
+                <small>تا ۸ تصویر اضافه؛ هر تصویر بررسی و بهینه ذخیره می‌شود.</small>
+                {% for error in form.gallery.errors %}
+                    <small class="form-error">{{ error }}</small>
+                {% endfor %}
+            </div>
+
+            {% if product and product.gallery %}
+                <div class="gallery-admin">
+                    <p>تصاویر اضافه فعلی (برای حذف، علامت بزنید):</p>
+                    <ul>
+                        {% for image in product.gallery %}
+                            <li>
+                                <img src="{{ url_for('products.product_image', filename=image.filename) }}"
+                                     alt="">
+                                <label class="filter-check">
+                                    <input type="checkbox" name="delete_image" value="{{ image.id }}">
+                                    حذف
+                                </label>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
             {{ form.submit(class="store-button") }}
         </form>
 
