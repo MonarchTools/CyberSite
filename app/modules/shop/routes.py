@@ -5,6 +5,8 @@ from flask import (
 from flask_login import login_required
 
 from app.extensions import db
+from app.modules.customers.auth import current_customer, customer_required
+from app.modules.customers.routes import download_limit
 from app.modules.products.models import Product
 from app.modules.shop.forms import CheckoutForm, FulfillmentForm
 from app.modules.shop.gateways import GatewayError, get_gateway
@@ -22,6 +24,8 @@ from app.modules.shop.services import (
     remove_from_cart,
     set_cart_quantity,
 )
+from wtforms.validators import Optional, Regexp
+
 from app.notifications import notify_fulfillment_change
 from app.utils import to_latin_digits
 from datetime import datetime, timezone
@@ -104,7 +108,9 @@ def cart_remove(product_id):
 # ------------------------------------------------------------ ثبت و پرداخت
 
 @shop_bp.route("/checkout", methods=["GET", "POST"])
+@customer_required
 def checkout():
+    customer = current_customer()
     lines, total = get_cart_lines()
 
     if not lines:
@@ -125,6 +131,18 @@ def checkout():
         return redirect(url_for("shop.cart"))
 
     form = CheckoutForm()
+
+    # سفارشِ فقط-فایل ارسال ندارد؛ شمارهٔ موبایل لازم نیست
+    if all(line.product.is_digital for line in lines):
+        form.phone.validators = [
+            Optional(),
+            Regexp(r"^09\d{9}$", message="شمارهٔ موبایل معتبر نیست (مثال: 09121234567).")
+        ]
+        form.phone.label.text = "شمارهٔ موبایل (اختیاری)"
+
+    if request.method == "GET":
+        form.full_name.data = customer.full_name
+        form.email.data = customer.email
 
     if not form.validate_on_submit():
         return render_template(
@@ -159,10 +177,11 @@ def checkout():
         lines,
         {
             "full_name": form.full_name.data,
-            "phone": form.phone.data,
+            "phone": form.phone.data or "",
             "email": form.email.data,
             "note": form.note.data,
-        }
+        },
+        customer_id=customer.id
     )
 
     if order is None:
@@ -235,10 +254,15 @@ def payment_callback():
 def order_detail(code):
     order = _get_order_by_code_or_404(code)
 
+    customer = current_customer()
+
     return render_template(
         "shop/order.html",
         order=order,
         fulfillments=Fulfillment,
+        # فقط خریدار همین سفارش دکمهٔ دانلود را می‌بیند
+        is_owner=bool(customer and order.customer_id == customer.id),
+        download_limit=download_limit(),
         can_recheck=(
             order.status in (OrderStatus.PENDING, OrderStatus.EXPIRED)
             and bool(order.authority)
@@ -409,4 +433,22 @@ def update_fulfillment(order_id):
         notify_fulfillment_change(order)
 
     flash("وضعیت سفارش به‌روزرسانی شد.", "success")
+    return redirect(url_for("shop.manage_order_detail", order_id=order.id))
+
+
+@shop_bp.route("/manage/orders/<int:order_id>/reset-downloads", methods=["POST"])
+@login_required
+def reset_downloads(order_id):
+    """شمارندهٔ دانلودِ اقلام فایلی را صفر می‌کند (مثلاً وقتی مشتری سقف را تمام کرده)."""
+    order = db.session.get(Order, order_id)
+
+    if order is None:
+        abort(404)
+
+    for item in order.items:
+        item.download_count = 0
+
+    db.session.commit()
+
+    flash("شمارندهٔ دانلود این سفارش صفر شد.", "success")
     return redirect(url_for("shop.manage_order_detail", order_id=order.id))

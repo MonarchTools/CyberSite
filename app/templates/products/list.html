@@ -2,6 +2,9 @@
 
 {% block title %}فروشگاه | CyberSite{% endblock %}
 
+{% block meta_description %}فروشگاه CyberSite؛ محصولات با قیمت و موجودی به‌روز{% endblock %}
+{% block robots %}{% if seo_has_filters() %}noindex, follow{% endif %}{% endblock %}
+
 {% block page_css %}
 <link rel="stylesheet"
       href="{{ url_for('static', filename='css/pages/admin.css') }}">
@@ -122,7 +125,7 @@
 
                     <strong>{{ product.price|rial }}</strong>
 
-                    {% if product.stock > 0 %}
+                    {% if product.in_stock %}
                         <span class="stock-available">موجود</span>
                     {% else %}
                         <span class="stock-unavailable">ناموجود</span>

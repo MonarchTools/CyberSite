@@ -314,3 +314,19 @@
     gap: var(--space-4);
     flex-wrap: wrap;
 }
+
+/* منو با دکمهٔ حساب کاربری شلوغ‌تر شده؛ برچسب‌ها نباید به چند خط بشکنند */
+.nav-links a,
+.nav-login {
+    white-space: nowrap;
+}
+
+@media (max-width: 1180px) {
+    .nav-links {
+        gap: var(--space-3);
+    }
+
+    .nav-links a {
+        font-size: .92rem;
+    }
+}

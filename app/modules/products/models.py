@@ -28,6 +28,14 @@ class Product(db.Model):
     stock = db.Column(db.Integer, nullable=False, default=0)
     image_filename = db.Column(db.String(255), nullable=True)
 
+    # محصول فایلی: بعد از پرداخت، مشتری فایل را از پنل خودش دانلود می‌کند
+    is_digital = db.Column(
+        db.Boolean, nullable=False, default=False, server_default="0"
+    )
+    file_name = db.Column(db.String(64), nullable=True)   # نام تصادفی ذخیره‌شده
+    file_title = db.Column(db.String(150), nullable=True)  # نام اصلی برای دانلود
+    file_size = db.Column(db.BigInteger, nullable=True)
+
     category_id = db.Column(
         db.Integer,
         db.ForeignKey("categories.id"),
@@ -53,6 +61,11 @@ class Product(db.Model):
         order_by="ProductImage.position, ProductImage.id",
         lazy="selectin"
     )
+
+    @property
+    def in_stock(self):
+        """محصول فایلی همیشه موجود است؛ بقیه بر اساس موجودی انبار."""
+        return bool(self.is_digital) or self.stock > 0
 
     @property
     def image_names(self):

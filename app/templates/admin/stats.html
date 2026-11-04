@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}آمار و گزارش | CyberSite{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/products.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/shop.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/stats.css') }}">
+{% endblock %}
+
+{% macro chart(data, title) %}
+<svg class="chart" viewBox="0 0 {{ data.width }} {{ data.height }}" role="img" aria-label="{{ title }}">
+    {% if data.bars %}
+        <line class="chart-axis" x1="0" x2="{{ data.width }}" y1="{{ data.base_y }}" y2="{{ data.base_y }}"/>
+        {% for bar in data.bars %}
+            <rect class="chart-bar{% if not bar.amount %} is-empty{% endif %}"
+                  x="{{ bar.x }}" y="{{ bar.y if bar.amount else data.base_y - 2 }}"
+                  width="{{ bar.w }}" height="{{ bar.h if bar.amount else 2 }}" rx="2">
+                <title>{{ bar.label }} — {{ bar.amount|rial }} ({{ bar.count }} سفارش)</title>
+            </rect>
+            {% if bar.show_label %}
+                <text class="chart-label" x="{{ bar.label_x }}" y="{{ data.label_y }}" text-anchor="middle">{{ bar.label }}</text>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+</svg>
+{% endmacro %}
+
+{% block content %}
+<section class="store-admin shop-page stats-page">
+
+    <div class="store-header">
+        <div>
+            <p class="admin-label">CYBERSITE / ANALYTICS</p>
+            <h1>آمار و گزارش</h1>
+            <p>فقط سفارش‌های پرداخت‌شده حساب می‌شوند؛ روزها به وقت تهران است.</p>
+        </div>
+
+        <div class="header-actions">
+            <a class="store-button" href="{{ url_for('admin.index') }}">داشبورد</a>
+        </div>
+    </div>
+
+    <div class="stat-cards">
+        <div class="stat-card"><span>فروش امروز</span><strong>{{ summary.today|rial }}</strong></div>
+        <div class="stat-card"><span>۷ روز اخیر</span><strong>{{ summary.week|rial }}</strong></div>
+        <div class="stat-card"><span>۳۰ روز اخیر</span><strong>{{ summary.month|rial }}</strong></div>
+        <div class="stat-card"><span>سفارش‌های ۳۰ روز</span><strong>{{ summary.month_count }}</strong></div>
+        <div class="stat-card"><span>میانگین هر سفارش</span><strong>{{ summary.average|rial }}</strong></div>
+        <div class="stat-card"><span>کل بازدید پست‌ها</span><strong>{{ total_views }}</strong></div>
+    </div>
+
+    <div class="stat-panel">
+        <h2>فروش روزانه (۳۰ روز اخیر)</h2>
+        {{ chart(daily, "نمودار فروش روزانه") }}
+    </div>
+
+    <div class="stat-panel">
+        <h2>فروش ماهانه (۱۲ ماه اخیر، ماه میلادی)</h2>
+        {{ chart(monthly, "نمودار فروش ماهانه") }}
+    </div>
+
+    <div class="stat-columns">
+
+        <div class="stat-panel">
+            <h2>پرفروش‌ترین محصولات</h2>
+            {% if top_products %}
+                <table class="product-table">
+                    <thead><tr><th>محصول</th><th>تعداد</th><th>جمع فروش</th></tr></thead>
+                    <tbody>
+                        {% for title, qty, total in top_products %}
+                            <tr><td>{{ title }}</td><td>{{ qty }}</td><td>{{ total|rial }}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="empty-state">هنوز فروشی ثبت نشده است.</p>
+            {% endif %}
+        </div>
+
+        <div class="stat-panel">
+            <h2>موجودی کم (حداکثر {{ low_stock_limit }})</h2>
+            {% if low_stock %}
+                <table class="product-table">
+                    <thead><tr><th>محصول</th><th>موجودی</th><th></th></tr></thead>
+                    <tbody>
+                        {% for product in low_stock %}
+                            <tr>
+                                <td>{{ product.title }}</td>
+                                <td>{% if product.stock <= 0 %}<b class="stock-zero">ناموجود</b>{% else %}{{ product.stock }}{% endif %}</td>
+                                <td><a href="{{ url_for('products.edit_product', product_id=product.id) }}">ویرایش</a></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="empty-state">همهٔ محصول‌ها موجودی کافی دارند.</p>
+            {% endif %}
+        </div>
+
+        <div class="stat-panel">
+            <h2>پربازدیدترین پست‌ها</h2>
+            {% if popular_posts %}
+                <table class="product-table">
+                    <thead><tr><th>پست</th><th>بازدید</th></tr></thead>
+                    <tbody>
+                        {% for post in popular_posts %}
+                            <tr>
+                                <td><a href="{{ url_for('blog.detail', slug=post.slug) }}">{{ post.title }}</a></td>
+                                <td>{{ post.view_count }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <p class="stat-note">هر بار باز شدن صفحه (بدون ورود مدیر و بدون ربات پیش‌نمایش) یک بازدید است؛ پس رفرش هم شمرده می‌شود.</p>
+            {% else %}
+                <p class="empty-state">هنوز پستی منتشر نشده است.</p>
+            {% endif %}
+        </div>
+
+    </div>
+
+</section>
+{% endblock %}

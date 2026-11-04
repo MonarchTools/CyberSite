@@ -54,7 +54,7 @@ class LoginAttempt(db.Model):
     )
 
     ip_address = db.Column(
-        db.String(45),
+        db.String(64),
         unique=True,
         nullable=False,
         index=True

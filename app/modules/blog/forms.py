@@ -1,13 +1,23 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileField, MultipleFileField
 from wtforms import (
-    BooleanField, StringField, SubmitField, TextAreaField
+    BooleanField, SelectField, StringField, SubmitField, TextAreaField
 )
 from wtforms.validators import DataRequired, Length, Optional
 
 
 def _strip(value):
     return value.strip() if isinstance(value, str) else value
+
+
+class CategoryForm(FlaskForm):
+    name = StringField(
+        "نام دسته",
+        filters=[_strip],
+        validators=[DataRequired(), Length(min=2, max=60)]
+    )
+
+    submit = SubmitField("افزودن دسته")
 
 
 class PostForm(FlaskForm):
@@ -35,6 +45,17 @@ class PostForm(FlaskForm):
             DataRequired(),
             Length(min=10, max=20000, message="متن باید بین ۱۰ تا ۲۰٬۰۰۰ کاراکتر باشد.")
         ]
+    )
+
+    # گزینه‌ها در view پر می‌شوند (۰ = بدون دسته)
+    category_id = SelectField(
+        "دسته‌بندی", coerce=int, choices=[(0, "بدون دسته")], default=0
+    )
+
+    tags_text = StringField(
+        "برچسب‌ها (اختیاری)",
+        filters=[_strip],
+        validators=[Optional(), Length(max=250)]
     )
 
     cover = FileField(

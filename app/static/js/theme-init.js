@@ -14,4 +14,9 @@
     }
 
     document.documentElement.setAttribute("data-theme", theme);
+
+    // رنگ زمینه همین حالا (پیش از رسیدن CSS) تنظیم می‌شود تا هنگام باز شدن صفحه
+    // برقِ سفید دیده نشود. تغییر style از طریق JavaScript با CSP سازگار است.
+    document.documentElement.style.backgroundColor =
+        theme === "light" ? "#FAFAFC" : "#0E1426";
 })();

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}دسته‌های وبلاگ | CyberSite{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/products.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/shop.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/posts.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="store-admin shop-page">
+
+    <div class="store-header">
+        <div>
+            <p class="admin-label">CYBERSITE / BLOG CONTROL</p>
+            <h1>دسته‌های وبلاگ</h1>
+            <p>برچسب‌ها هنگام نوشتن پست خودکار ساخته می‌شوند.</p>
+        </div>
+
+        <div class="header-actions">
+            <a class="store-button" href="{{ url_for('blog.manage_posts') }}">مدیریت پست‌ها</a>
+        </div>
+    </div>
+
+    {% include "components/flashes.html" %}
+
+    <div class="category-panel">
+        <h2>دسته‌ها</h2>
+
+        <form method="POST" action="{{ url_for('blog.manage_categories') }}" class="category-form">
+            {{ form.hidden_tag() }}
+            {{ form.name(class="admin-input", placeholder="نام دستهٔ جدید") }}
+            {{ form.submit(class="store-button") }}
+        </form>
+
+        {% for error in form.name.errors %}
+            <small class="form-error">{{ error }}</small>
+        {% endfor %}
+
+        <div class="category-list">
+            {% for category in categories %}
+                <div class="category-item">
+                    <span>{{ category.name }} <small>({{ counts.get(category.id, 0) }} پست)</small></span>
+
+                    <form method="POST"
+                          action="{{ url_for('blog.delete_category', category_id=category.id) }}"
+                          data-confirm="این دسته حذف شود؟ پست‌های آن بدون دسته می‌مانند.">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="delete-button" type="submit">حذف</button>
+                    </form>
+                </div>
+            {% else %}
+                <p>هنوز دسته‌ای ساخته نشده است.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+</section>
+{% endblock %}

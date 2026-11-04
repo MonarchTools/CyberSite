@@ -370,3 +370,63 @@
     max-width: 320px;
     overflow-wrap: anywhere;
 }
+
+/* دسته‌ها و برچسب‌ها */
+.taxonomy-bar,
+.tag-cloud,
+.post-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 20px;
+}
+
+.tag-cloud {
+    align-items: center;
+    margin-top: 28px;
+}
+
+.tag-cloud h2 {
+    flex-basis: 100%;
+    margin: 0;
+    font-size: 1rem;
+    color: var(--text-secondary);
+}
+
+.taxonomy-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font-size: .9rem;
+    text-decoration: none;
+    transition: border-color .15s, color .15s;
+}
+
+.taxonomy-chip.small {
+    padding: 3px 10px;
+    font-size: .82rem;
+}
+
+.taxonomy-chip:hover,
+.taxonomy-chip.is-active {
+    border-color: var(--blue-primary);
+    color: var(--text-primary);
+}
+
+.taxonomy-chip.is-active {
+    background: var(--blue-primary);
+    color: var(--on-accent);
+}
+
+.post-tags {
+    margin: 24px 0 0;
+}
+
+.post-meta a {
+    color: var(--blue-neon);
+}

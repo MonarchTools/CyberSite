@@ -31,6 +31,11 @@ def client_ip():
     return (request.remote_addr or "unknown")[:45]
 
 
+def _key(scope):
+    """کلید شمارنده: هر بخش (مدیر، مشتری) قفل جداگانه دارد."""
+    return f"{scope}:{client_ip()}" if scope else client_ip()
+
+
 def _get_row(ip, create=False):
     row = LoginAttempt.query.filter_by(ip_address=ip).first()
 
@@ -52,9 +57,9 @@ def _get_row(ip, create=False):
     return row
 
 
-def lock_remaining():
+def lock_remaining(scope=""):
     """ثانیه‌های باقی‌ماندهٔ قفل؛ اگر قفل نباشد 0."""
-    row = _get_row(client_ip())
+    row = _get_row(_key(scope))
 
     if row is None:
         return 0
@@ -74,7 +79,7 @@ def lock_remaining():
     return 0
 
 
-def register_failure():
+def register_failure(scope=""):
     max_attempts, lock_seconds = _limits()
     now = time.time()
 
@@ -84,7 +89,7 @@ def register_failure():
         LoginAttempt.locked_until.is_(None),
     ).delete(synchronize_session=False)
 
-    row = _get_row(client_ip(), create=True)
+    row = _get_row(_key(scope), create=True)
 
     if row.locked_until and row.locked_until > now:
         db.session.commit()
@@ -111,8 +116,8 @@ def register_failure():
     db.session.commit()
 
 
-def register_success():
-    LoginAttempt.query.filter_by(ip_address=client_ip()).delete(
+def register_success(scope=""):
+    LoginAttempt.query.filter_by(ip_address=_key(scope)).delete(
         synchronize_session=False
     )
     db.session.commit()

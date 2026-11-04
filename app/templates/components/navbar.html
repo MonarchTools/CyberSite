@@ -25,6 +25,12 @@
             <span class="icon-moon" aria-hidden="true">☾</span>
         </button>
 
+        {% if customer %}
+            <a href="{{ url_for('customers.dashboard') }}" class="nav-login">حساب من</a>
+        {% else %}
+            <a href="{{ url_for('customers.login') }}" class="nav-login">ورود / ثبت‌نام</a>
+        {% endif %}
+
         <a href="{{ url_for('admin.index') }}" class="nav-login">
             مدیریت
         </a>

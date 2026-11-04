@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
-    
+    // رنگ موقتی theme-init دیگر لازم نیست؛ CSS آمده و با تغییر پوسته هم درست عوض می‌شود
+    document.documentElement.style.backgroundColor = "";
 
     document.documentElement.classList.add("js-ready");
 });

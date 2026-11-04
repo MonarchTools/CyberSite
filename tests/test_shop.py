@@ -54,7 +54,28 @@ def app():
 
 @pytest.fixture()
 def client(app):
-    return app.test_client()
+    client = app.test_client()
+    login_customer(app, client)
+    return client
+
+
+def login_customer(app, client, email="buyer@example.test"):
+    """مشتری آزمایشی می‌سازد و در نشست این client وارد می‌کند (خرید فقط با حساب ممکن است)."""
+    from app.modules.customers.models import Customer
+
+    with app.app_context():
+        customer = Customer.query.filter_by(email=email).first()
+
+        if customer is None:
+            customer = Customer(email=email, full_name="خریدار آزمایشی")
+            customer.set_password("buyer-password-1")
+            db.session.add(customer)
+            db.session.commit()
+
+        customer_id = customer.id
+
+    with client.session_transaction() as session:
+        session["customer_id"] = customer_id
 
 
 def product_id(app, title):

@@ -14,6 +14,15 @@ from app.extensions import db
 # (جدول، ستون، نوع SQL)
 ADDED_COLUMNS = (
     ("posts", "cover_image", "VARCHAR(64)"),
+    ("products", "is_digital", "BOOLEAN NOT NULL DEFAULT 0"),
+    ("products", "file_name", "VARCHAR(64)"),
+    ("products", "file_title", "VARCHAR(150)"),
+    ("products", "file_size", "BIGINT"),
+    ("orders", "customer_id", "INTEGER REFERENCES customers(id)"),
+    ("order_items", "is_digital", "BOOLEAN NOT NULL DEFAULT 0"),
+    ("order_items", "download_count", "INTEGER NOT NULL DEFAULT 0"),
+    ("posts", "view_count", "INTEGER NOT NULL DEFAULT 0"),
+    ("posts", "category_id", "INTEGER REFERENCES blog_categories(id)"),
     ("orders", "fulfillment", "VARCHAR(20) NOT NULL DEFAULT 'new'"),
     ("orders", "tracking_code", "VARCHAR(64)"),
     ("orders", "shipped_at", "DATETIME"),

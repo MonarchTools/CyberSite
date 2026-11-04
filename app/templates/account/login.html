@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}ورود به حساب | CyberSite{% endblock %}
+{% block robots %}noindex, follow{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/account.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="admin-auth">
+    <div class="admin-auth-card">
+
+        <div class="admin-icon">C</div>
+
+        <p class="admin-label">CYBERSITE / ACCOUNT</p>
+        <h1>ورود به حساب</h1>
+        <p class="admin-subtitle">برای خرید و دانلود فایل‌ها وارد شوید.</p>
+
+        {% include "components/flashes.html" %}
+
+        <form method="POST" action="{{ url_for('customers.login', next=next_url or None) }}" novalidate>
+            {{ form.hidden_tag() }}
+
+            <div class="admin-form-group">
+                {{ form.email.label }}
+                {{ form.email(class="admin-input", autocomplete="email", dir="ltr") }}
+                {% for error in form.email.errors %}
+                    <small class="form-error">{{ error }}</small>
+                {% endfor %}
+            </div>
+
+            <div class="admin-form-group">
+                {{ form.password.label }}
+                {{ form.password(class="admin-input", autocomplete="current-password") }}
+                {% for error in form.password.errors %}
+                    <small class="form-error">{{ error }}</small>
+                {% endfor %}
+            </div>
+
+            {{ form.submit(class="store-button") }}
+        </form>
+
+        <p class="account-switch">
+            حساب ندارید؟
+            <a href="{{ url_for('customers.register', next=next_url or None) }}">ثبت‌نام</a>
+        </p>
+
+    </div>
+</section>
+{% endblock %}

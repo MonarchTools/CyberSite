@@ -8,6 +8,7 @@ import unicodedata
 RESERVED = {
     "manage", "create", "edit", "delete", "new",
     "feed", "rss", "page", "image", "comments",
+    "category", "categories", "tag",
 }
 
 _NON_WORD = re.compile(r"[^\w\-]+", re.UNICODE)

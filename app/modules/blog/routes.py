@@ -12,9 +12,12 @@ from flask_login import current_user, login_required
 from markupsafe import Markup
 
 from app.extensions import db
-from app.modules.blog.forms import PostForm
+from app.modules.blog.forms import CategoryForm, PostForm
 from app.modules.blog.markup import render_body
-from app.modules.blog.models import Post, PostImage
+from app.modules.blog.models import BlogCategory, BlogTag, Post, PostImage
+from app.modules.blog.taxonomy import (
+    published_categories, published_tags, tags_from_text, tags_text
+)
 from sqlalchemy import or_
 from app.modules.blog.slugs import RESERVED, slugify
 from app.uploads import (
@@ -34,6 +37,32 @@ COVER_FOLDER = "blog"
 ADMIN_PER_PAGE = 20
 MAX_BODY_IMAGES = 12
 FEED_LIMIT = 20
+
+# ربات‌های پیش‌نمایش لینک و موتورهای جست‌وجو در شمارندهٔ بازدید نمی‌آیند
+_BOT_AGENT = re.compile(
+    r"bot|crawl|spider|slurp|preview|facebookexternalhit|whatsapp|telegram|"
+    r"curl|wget|python-requests",
+    re.IGNORECASE,
+)
+
+
+def _count_view(post):
+    if (
+        not post.is_published
+        or current_user.is_authenticated
+        or request.method != "GET"
+        or _BOT_AGENT.search(request.headers.get("User-Agent", ""))
+    ):
+        return
+
+    try:
+        Post.query.filter(Post.id == post.id).update(
+            {Post.view_count: Post.view_count + 1},
+            synchronize_session=False,
+        )
+        db.session.commit()
+    except Exception:  # noqa: BLE001 - شمارش بازدید نباید صفحه را خراب کند
+        db.session.rollback()
 
 
 @blog_bp.app_template_filter("post_body")
@@ -101,6 +130,24 @@ def _escape_like(text):
     )
 
 
+def _render_list(query, search="", endpoint="blog.index", args=None, **extra):
+    pagination = query.order_by(
+        Post.published_at.desc(), Post.id.desc()
+    ).paginate(page=_page(), per_page=PUBLIC_PER_PAGE, error_out=False)
+
+    return render_template(
+        "blog/list.html",
+        posts=pagination.items,
+        pagination=pagination,
+        search=search,
+        list_endpoint=endpoint,
+        list_args=args or {},
+        categories=published_categories(),
+        tag_cloud=published_tags(),
+        **extra
+    )
+
+
 @blog_bp.route("/")
 def index():
     search = request.args.get("q", "").strip()[:80]
@@ -117,15 +164,39 @@ def index():
             )
         )
 
-    pagination = query.order_by(
-        Post.published_at.desc(), Post.id.desc()
-    ).paginate(page=_page(), per_page=PUBLIC_PER_PAGE, error_out=False)
+    return _render_list(query, search=search)
 
-    return render_template(
-        "blog/list.html",
-        posts=pagination.items,
-        pagination=pagination,
-        search=search
+
+@blog_bp.route("/category/<slug>")
+def category(slug):
+    current = BlogCategory.query.filter_by(slug=slug).first()
+
+    if current is None:
+        abort(404)
+
+    query = Post.query.filter(
+        Post.is_published.is_(True), Post.category_id == current.id
+    )
+
+    return _render_list(
+        query, endpoint="blog.category", args={"slug": slug},
+        active_category=current
+    )
+
+
+@blog_bp.route("/tag/<slug>")
+def tag(slug):
+    current = BlogTag.query.filter_by(slug=slug).first()
+
+    if current is None:
+        abort(404)
+
+    query = Post.query.filter(
+        Post.is_published.is_(True), Post.tags.any(BlogTag.id == current.id)
+    )
+
+    return _render_list(
+        query, endpoint="blog.tag", args={"slug": slug}, active_tag=current
     )
 
 
@@ -194,6 +265,8 @@ def detail(slug):
     # پیش‌نویس فقط برای ادمین دیده می‌شود
     if not post.is_published and not current_user.is_authenticated:
         abort(404)
+
+    _count_view(post)
 
     # import محلی: ماژول نظرات خودش به مدل پست وابسته است
     from app.modules.comments.forms import CommentForm
@@ -266,6 +339,13 @@ def _apply_body_images(form, post, saved, removed):
         post.body_images.append(PostImage(filename=name))
 
 
+def _fill_categories(form):
+    form.category_id.choices = [(0, "بدون دسته")] + [
+        (category.id, category.name)
+        for category in BlogCategory.query.order_by(BlogCategory.name).all()
+    ]
+
+
 def _save(form, post):
     slug, error = _resolve_slug(form, post)
 
@@ -295,6 +375,8 @@ def _save(form, post):
     post.excerpt = form.excerpt.data or None
     post.body = form.body.data
     post.is_published = bool(form.is_published.data)
+    post.category_id = form.category_id.data or None
+    post.tags = tags_from_text(form.tags_text.data)
 
     if new_cover:
         post.cover_image = new_cover
@@ -343,6 +425,7 @@ def _save(form, post):
 @login_required
 def create_post():
     form = PostForm()
+    _fill_categories(form)
 
     if form.validate_on_submit():
         post = _save(form, None)
@@ -365,6 +448,10 @@ def edit_post(post_id):
         abort(404)
 
     form = PostForm(obj=post)
+    _fill_categories(form)
+
+    if request.method == "GET":
+        form.tags_text.data = tags_text(post)
 
     if form.validate_on_submit():
         if _save(form, post) is not None:
@@ -399,3 +486,61 @@ def delete_post(post_id):
 
     flash("پست حذف شد.", "success")
     return redirect(url_for("blog.manage_posts"))
+
+
+# ------------------------------------------------------ مدیریت دسته‌ها
+
+@blog_bp.route("/categories", methods=["GET", "POST"])
+@login_required
+def manage_categories():
+    form = CategoryForm()
+
+    if form.validate_on_submit():
+        name = " ".join(form.name.data.split())
+        slug = slugify(name)
+
+        if not slug:
+            flash("نام دسته باید شامل حروف یا عدد باشد.", "danger")
+        elif BlogCategory.query.filter(
+            or_(BlogCategory.name == name, BlogCategory.slug == slug)
+        ).first():
+            flash("این دسته قبلاً ثبت شده است.", "warning")
+        else:
+            db.session.add(BlogCategory(name=name, slug=slug))
+            db.session.commit()
+            flash("دسته اضافه شد.", "success")
+
+        return redirect(url_for("blog.manage_categories"))
+
+    counts = dict(
+        db.session.query(Post.category_id, db.func.count(Post.id))
+        .filter(Post.category_id.isnot(None))
+        .group_by(Post.category_id).all()
+    )
+
+    return render_template(
+        "blog/categories.html",
+        form=form,
+        categories=BlogCategory.query.order_by(BlogCategory.name).all(),
+        counts=counts,
+    )
+
+
+@blog_bp.route("/categories/delete/<int:category_id>", methods=["POST"])
+@login_required
+def delete_category(category_id):
+    category = db.session.get(BlogCategory, category_id)
+
+    if category is None:
+        abort(404)
+
+    # پست‌های این دسته حذف نمی‌شوند؛ فقط بدون دسته می‌شوند
+    Post.query.filter(Post.category_id == category.id).update(
+        {Post.category_id: None}, synchronize_session=False
+    )
+    db.session.delete(category)
+    db.session.commit()
+
+    flash("دسته حذف شد؛ پست‌های آن بدون دسته ماندند.", "success")
+
+    return redirect(url_for("blog.manage_categories"))

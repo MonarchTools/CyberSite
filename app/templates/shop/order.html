@@ -9,6 +9,8 @@
       href="{{ url_for('static', filename='css/pages/products.css') }}">
 <link rel="stylesheet"
       href="{{ url_for('static', filename='css/pages/shop.css') }}">
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/account.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -46,6 +48,40 @@
                     <strong dir="ltr">{{ order.tracking_code }}</strong>
                 </p>
             {% endif %}
+        </div>
+    {% endif %}
+
+    {% set digital_items = order.items|selectattr('is_digital')|list %}
+    {% if digital_items and order.status == 'paid' %}
+        <div class="shop-card download-card">
+            <h2 class="card-title">دانلود فایل‌ها</h2>
+
+            {% if is_owner %}
+                <ul class="download-list">
+                    {% for item in digital_items %}
+                        <li>
+                            <span>{{ item.title }}</span>
+                            {% if item.download_count < download_limit %}
+                                <a class="store-button small"
+                                   href="{{ url_for('customers.download', item_id=item.id) }}">
+                                    دانلود
+                                </a>
+                                <small>{{ download_limit - item.download_count }} بار دانلود باقی مانده</small>
+                            {% else %}
+                                <small>سقف دانلود تمام شده است؛ با ما تماس بگیرید.</small>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+                <p class="shop-note">فایل‌ها همیشه در <a href="{{ url_for('customers.dashboard') }}">پنل شما</a> هم هستند.</p>
+            {% else %}
+                <p>برای دانلود، با حسابی که خرید را انجام داده‌اید
+                    <a href="{{ url_for('customers.login', next=request.path) }}">وارد شوید</a>.</p>
+            {% endif %}
+        </div>
+    {% elif digital_items and order.status != 'paid' %}
+        <div class="shop-card">
+            <p>لینک دانلود بعد از تأیید پرداخت اینجا نمایش داده می‌شود.</p>
         </div>
     {% endif %}
 

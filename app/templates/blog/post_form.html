@@ -47,6 +47,24 @@
             </div>
 
             <div class="admin-form-group">
+                {{ form.category_id.label }}
+                {{ form.category_id(class="admin-input") }}
+                <small>دسته‌ها را از <a href="{{ url_for('blog.manage_categories') }}">اینجا</a> بسازید.</small>
+                {% for error in form.category_id.errors %}
+                    <small class="form-error">{{ error }}</small>
+                {% endfor %}
+            </div>
+
+            <div class="admin-form-group">
+                {{ form.tags_text.label }}
+                {{ form.tags_text(class="admin-input", placeholder="مثلاً: پایتون، امنیت، شبکه") }}
+                <small>با ویرگول جدا کنید؛ حداکثر ۸ برچسب.</small>
+                {% for error in form.tags_text.errors %}
+                    <small class="form-error">{{ error }}</small>
+                {% endfor %}
+            </div>
+
+            <div class="admin-form-group">
                 {{ form.cover.label }}
                 {{ form.cover(class="admin-input", accept="image/png,image/jpeg,image/webp") }}
                 <small>JPG، PNG یا WEBP، حداکثر ۵ مگابایت. تصویر بهینه و بدون اطلاعات جانبی ذخیره می‌شود.</small>

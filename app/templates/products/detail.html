@@ -2,6 +2,10 @@
 
 {% block title %}{{ product.title }} | CyberSite{% endblock %}
 
+{% block meta_description %}{{ (product.description or product.title)|striptags|truncate(160, true, '…') }}{% endblock %}
+{% block og_type %}product{% endblock %}
+{% block og_image %}{{ seo_og_image('products', product.image_names[0] if product.image_names else none) }}{% endblock %}
+
 {% block page_css %}
 <link rel="stylesheet"
       href="{{ url_for('static', filename='css/pages/admin.css') }}">
@@ -64,11 +68,15 @@
 
             <p class="product-price">{{ product.price|rial }}</p>
 
-            {% if product.stock > 0 %}
+            {% if product.in_stock %}
                 <p class="stock-available">
-                    موجود
-                    {% if product.stock <= 5 %}
-                        — فقط {{ product.stock }} عدد باقی مانده
+                    {% if product.is_digital %}
+                        فایل دانلودی — بلافاصله بعد از پرداخت
+                    {% else %}
+                        موجود
+                        {% if product.stock <= 5 %}
+                            — فقط {{ product.stock }} عدد باقی مانده
+                        {% endif %}
                     {% endif %}
                 </p>
 
@@ -78,15 +86,19 @@
                     <input type="hidden" name="csrf_token"
                            value="{{ csrf_token() }}">
 
-                    <label for="quantity">تعداد</label>
-                    <input class="admin-input qty-input"
-                           id="quantity"
-                           type="number"
-                           name="quantity"
-                           min="1"
-                           max="{{ max_quantity }}"
-                           value="1"
-                           inputmode="numeric">
+                    {% if product.is_digital %}
+                        <input type="hidden" name="quantity" value="1">
+                    {% else %}
+                        <label for="quantity">تعداد</label>
+                        <input class="admin-input qty-input"
+                               id="quantity"
+                               type="number"
+                               name="quantity"
+                               min="1"
+                               max="{{ max_quantity }}"
+                               value="1"
+                               inputmode="numeric">
+                    {% endif %}
 
                     <button class="store-button" type="submit">
                         افزودن به سبد خرید

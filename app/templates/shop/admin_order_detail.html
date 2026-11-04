@@ -9,6 +9,8 @@
       href="{{ url_for('static', filename='css/pages/products.css') }}">
 <link rel="stylesheet"
       href="{{ url_for('static', filename='css/pages/shop.css') }}">
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/account.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -96,6 +98,27 @@
                 <strong>{{ order.total_rial|rial }}</strong>
             </div>
         </div>
+
+        {% set digital_items = order.items|selectattr('is_digital')|list %}
+        {% if digital_items %}
+            <div class="download-admin">
+                <h3>دانلود فایل‌ها</h3>
+                <ul>
+                    {% for item in digital_items %}
+                        <li>{{ item.title }} — {{ item.download_count }} بار دانلود شده</li>
+                    {% endfor %}
+                </ul>
+                {% if order.customer %}
+                    <small>مشتری: {{ order.customer.full_name }} ({{ order.customer.email }})</small>
+                {% endif %}
+
+                <form method="POST"
+                      action="{{ url_for('shop.reset_downloads', order_id=order.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="store-button small" type="submit">صفر کردن شمارندهٔ دانلود</button>
+                </form>
+            </div>
+        {% endif %}
     </div>
 
     {% if order.status == 'paid' %}

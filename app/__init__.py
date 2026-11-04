@@ -3,6 +3,7 @@ from app.modules.home.models import SiteSetting
 from app.modules.admin.models import Admin
 from app.modules.shop.models import Order, OrderItem
 from app.modules.contact.models import ContactMessage
+from app.modules.customers.models import Customer
 from app.modules.blog.models import Post
 from pathlib import Path
 from flask import Flask
@@ -12,12 +13,15 @@ from app.extensions import db, login_manager, csrf
 from app.security import ensure_secret_key, init_security
 from app.db_upgrade import upgrade_schema
 from app.errors import register_error_handlers
+from app.seo import init_seo
+from app.static_cache import init_static_cache
 
 
 def create_app(config_class=Config):
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(config_class)
 
+    init_static_cache(app)
     ensure_secret_key(app)
     init_security(app)
     register_error_handlers(app)
@@ -52,6 +56,10 @@ def create_app(config_class=Config):
     from app.modules.slides.routes import slides_bp
     from app.modules.content.routes import content_bp
     from app.modules.comments.routes import comments_bp
+    from app.modules.seo.routes import seo_bp
+    from app.modules.stats.routes import stats_bp
+    from app.modules.customers.routes import customers_bp
+    from app.modules.customers.auth import current_customer
     from app.modules.comments import models as _comment_models  # noqa: F401 - برای create_all
     from app.modules.content import models as _content_models  # noqa: F401 - برای create_all
     from app.modules.content.service import get_text
@@ -68,12 +76,21 @@ def create_app(config_class=Config):
     app.register_blueprint(slides_bp)
     app.register_blueprint(content_bp)
     app.register_blueprint(comments_bp)
+    app.register_blueprint(seo_bp)
+    app.register_blueprint(stats_bp)
+    app.register_blueprint(customers_bp)
+    init_seo(app)
 
     app.jinja_env.filters["rial"] = format_rial
 
     @app.context_processor
     def inject_cart_count():
         return {"cart_item_count": cart_count()}
+
+    @app.context_processor
+    def inject_customer():
+        # مشتری واردشده (یا None)؛ جدا از Flask-Login که فقط برای مدیر است
+        return {"customer": current_customer()}
 
     @app.context_processor
     def inject_site_content():

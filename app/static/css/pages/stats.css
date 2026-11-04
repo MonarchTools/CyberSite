@@ -1,0 +1,91 @@
+/* صفحهٔ آمار و گزارش */
+.stat-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+.stat-card,
+.stat-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+}
+
+.stat-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 16px 18px;
+}
+
+.stat-card span {
+    font-size: .85rem;
+    color: var(--text-secondary);
+}
+
+.stat-card strong {
+    font-size: 1.15rem;
+    color: var(--text-primary);
+}
+
+.stat-panel {
+    padding: 18px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+}
+
+.stat-panel h2 {
+    margin: 0 0 14px;
+    font-size: 1.05rem;
+}
+
+.stat-columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 20px;
+}
+
+.stat-columns .stat-panel {
+    margin-bottom: 0;
+}
+
+.chart {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-width: 420px;
+}
+
+.chart-bar {
+    fill: var(--blue-primary);
+}
+
+.chart-bar:hover {
+    fill: var(--blue-neon);
+}
+
+.chart-bar.is-empty {
+    fill: var(--border-strong);
+}
+
+.chart-axis {
+    stroke: var(--border-strong);
+    stroke-width: 1;
+}
+
+.chart-label {
+    fill: var(--text-secondary);
+    font-size: 11px;
+}
+
+.stock-zero {
+    color: var(--blue-neon);
+}
+
+.stat-note {
+    margin: 12px 0 0;
+    font-size: .8rem;
+    color: var(--text-secondary);
+}

@@ -25,7 +25,18 @@ class Config:
     )
     # سقف کل یک درخواست (مدیر می‌تواند چند عکس را با هم بفرستد).
     # بازدیدکنندهٔ بدون ورود فقط تا ANONYMOUS_MAX_BODY_BYTES اجازه دارد.
-    MAX_CONTENT_LENGTH = 24 * 1024 * 1024
+    # محصولات فایلی (دانلودی)
+    DIGITAL_FILE_MAX_MB = int(os.getenv("DIGITAL_FILE_MAX_MB", "200") or 200)
+    DIGITAL_DOWNLOAD_LIMIT = int(os.getenv("DIGITAL_DOWNLOAD_LIMIT", "5") or 5)
+    DIGITAL_ALLOWED_EXTENSIONS = (
+        "zip", "rar", "7z", "pdf", "epub", "mp3", "mp4", "txt",
+        "docx", "xlsx", "pptx", "csv", "json", "py",
+    )
+
+    MAX_CONTENT_LENGTH = max(
+        24 * 1024 * 1024,
+        (int(os.getenv("DIGITAL_FILE_MAX_MB", "200") or 200) + 4) * 1024 * 1024,
+    )
     ANONYMOUS_MAX_BODY_BYTES = 512 * 1024
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 

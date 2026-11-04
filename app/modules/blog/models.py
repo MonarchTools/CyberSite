@@ -8,6 +8,38 @@ _LINK = re.compile(r"\[([^\]\n]+)\]\([^)\s]+\)")
 _MARKS = re.compile(r"[#*`>]|^[-]\s+", re.MULTILINE)
 
 
+# جدول واسط پست و برچسب (چند به چند)
+post_tags = db.Table(
+    "post_tags",
+    db.Column(
+        "post_id", db.Integer,
+        db.ForeignKey("posts.id", ondelete="CASCADE"), primary_key=True
+    ),
+    db.Column(
+        "tag_id", db.Integer,
+        db.ForeignKey("blog_tags.id", ondelete="CASCADE"), primary_key=True
+    ),
+)
+
+
+class BlogCategory(db.Model):
+    """دستهٔ وبلاگ (جدا از دستهٔ محصولات فروشگاه)."""
+
+    __tablename__ = "blog_categories"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(60), unique=True, nullable=False)
+    slug = db.Column(db.String(80), unique=True, nullable=False, index=True)
+
+
+class BlogTag(db.Model):
+    __tablename__ = "blog_tags"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(40), nullable=False)
+    slug = db.Column(db.String(80), unique=True, nullable=False, index=True)
+
+
 class Post(db.Model):
     __tablename__ = "posts"
 
@@ -39,6 +71,26 @@ class Post(db.Model):
         onupdate=utcnow_naive
     )
     published_at = db.Column(db.DateTime, nullable=True, index=True)
+
+    # تعداد بازدید بازدیدکنندگان (مدیر و ربات‌های پیش‌نمایش لینک شمرده نمی‌شوند)
+    view_count = db.Column(
+        db.Integer, nullable=False, default=0, server_default="0"
+    )
+
+    category_id = db.Column(
+        db.Integer,
+        db.ForeignKey("blog_categories.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True
+    )
+    category = db.relationship("BlogCategory", lazy="joined")
+
+    tags = db.relationship(
+        "BlogTag",
+        secondary=post_tags,
+        order_by="BlogTag.name",
+        lazy="selectin"
+    )
 
     # عکس‌های داخل متن (آپلودشده برای همین پست)
     body_images = db.relationship(

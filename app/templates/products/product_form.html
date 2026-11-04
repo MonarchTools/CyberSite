@@ -54,6 +54,25 @@
             </div>
 
             <div class="admin-form-group">
+                <label class="check-label">
+                    {{ form.is_digital() }} {{ form.is_digital.label.text }}
+                </label>
+                <small>برای فروش فایل: بعد از پرداخت، خریدار آن را از پنل مشتری دانلود می‌کند و «موجودی» نادیده گرفته می‌شود.</small>
+            </div>
+
+            <div class="admin-form-group">
+                {{ form.product_file.label }}
+                {{ form.product_file(class="admin-input") }}
+                <small>حداکثر {{ config.DIGITAL_FILE_MAX_MB }} مگابایت؛ پسوندهای مجاز: {{ config.DIGITAL_ALLOWED_EXTENSIONS|join('، ') }}</small>
+                {% if product and product.file_title %}
+                    <small>فایل فعلی: <b dir="ltr">{{ product.file_title }}</b> — برای جایگزینی، فایل تازه انتخاب کنید.</small>
+                {% endif %}
+                {% for error in form.product_file.errors %}
+                    <small class="form-error">{{ error }}</small>
+                {% endfor %}
+            </div>
+
+            <div class="admin-form-group">
                 {{ form.category_id.label }}
                 {{ form.category_id(class="admin-input") }}
             </div>

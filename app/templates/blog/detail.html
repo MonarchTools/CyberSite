@@ -3,6 +3,9 @@
 {% block title %}{{ post.title }} | CyberSite{% endblock %}
 
 {% block meta_description %}{{ post.summary }}{% endblock %}
+{% block og_type %}article{% endblock %}
+{% block og_image %}{{ seo_og_image('blog', post.cover_image or (post.body_images[0].filename if post.body_images else none)) }}{% endblock %}
+{% block robots %}{% if not post.is_published %}noindex, nofollow{% endif %}{% endblock %}
 {% block page_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/products.css') }}">
@@ -28,6 +31,9 @@
     <article class="post-article">
         <p class="post-meta">
             {{ (post.published_at or post.created_at).strftime('%Y-%m-%d') }}
+            {% if post.category %}
+                · <a href="{{ url_for('blog.category', slug=post.category.slug) }}">{{ post.category.name }}</a>
+            {% endif %}
         </p>
 
         <h1>{{ post.title }}</h1>
@@ -40,6 +46,14 @@
         {% endif %}
 
         <div class="post-body">{{ post.body|post_body }}</div>
+
+        {% if post.tags %}
+            <p class="post-tags">
+                {% for item in post.tags %}
+                    <a class="taxonomy-chip small" href="{{ url_for('blog.tag', slug=item.slug) }}">#{{ item.name }}</a>
+                {% endfor %}
+            </p>
+        {% endif %}
 
         {% if current_user.is_authenticated %}
             <p>

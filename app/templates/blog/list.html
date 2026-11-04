@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 
-{% block title %}وبلاگ | CyberSite{% endblock %}
+{% block title %}{% if active_category %}{{ active_category.name }} | وبلاگ | CyberSite{% elif active_tag %}برچسب {{ active_tag.name }} | وبلاگ | CyberSite{% else %}وبلاگ | CyberSite{% endif %}{% endblock %}
+
+{% block meta_description %}{% if active_category %}نوشته‌های دستهٔ «{{ active_category.name }}» در وبلاگ CyberSite{% elif active_tag %}نوشته‌های با برچسب «{{ active_tag.name }}» در وبلاگ CyberSite{% else %}نوشته‌ها و یادداشت‌های CyberSite{% endif %}{% endblock %}
+{% block robots %}{% if search %}noindex, follow{% endif %}{% endblock %}
 
 {% block page_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin.css') }}">
@@ -20,10 +23,21 @@
     <div class="store-header">
         <div>
             <p class="admin-label">CYBERSITE / BLOG</p>
-            <h1>وبلاگ</h1>
-            <p>نوشته‌ها و یادداشت‌ها</p>
+            <h1>{% if active_category %}{{ active_category.name }}{% elif active_tag %}برچسب: {{ active_tag.name }}{% else %}وبلاگ{% endif %}</h1>
+            <p>{% if active_category or active_tag %}<a href="{{ url_for('blog.index') }}">← همهٔ نوشته‌ها</a>{% else %}نوشته‌ها و یادداشت‌ها{% endif %}</p>
         </div>
     </div>
+
+    {% if categories %}
+        <nav class="taxonomy-bar" aria-label="دسته‌ها">
+            <a class="taxonomy-chip{% if not active_category and not active_tag %} is-active{% endif %}"
+               href="{{ url_for('blog.index') }}">همه</a>
+            {% for item, count in categories %}
+                <a class="taxonomy-chip{% if active_category and active_category.id == item.id %} is-active{% endif %}"
+                   href="{{ url_for('blog.category', slug=item.slug) }}">{{ item.name }} <small>{{ count }}</small></a>
+            {% endfor %}
+        </nav>
+    {% endif %}
 
     <form class="blog-search" method="GET" action="{{ url_for('blog.index') }}" role="search">
         <input class="admin-input" type="search" name="q" value="{{ search }}"
@@ -56,6 +70,9 @@
                 <div class="post-card-body">
                     <p class="post-meta">
                         {{ (post.published_at or post.created_at).strftime('%Y-%m-%d') }}
+                        {% if post.category %}
+                            · <a href="{{ url_for('blog.category', slug=post.category.slug) }}">{{ post.category.name }}</a>
+                        {% endif %}
                     </p>
 
                     <h2>
@@ -74,7 +91,7 @@
             </article>
         {% else %}
             <p class="empty-state">
-                {% if search %}نوشته‌ای با این جستجو پیدا نشد.{% else %}هنوز نوشته‌ای منتشر نشده است.{% endif %}
+                {% if search %}نوشته‌ای با این جستجو پیدا نشد.{% elif active_category or active_tag %}هنوز نوشته‌ای در این بخش منتشر نشده است.{% else %}هنوز نوشته‌ای منتشر نشده است.{% endif %}
             </p>
         {% endfor %}
     </div>
@@ -82,7 +99,7 @@
     {% if pagination.pages > 1 %}
         <nav class="pagination" aria-label="صفحه‌بندی">
             {% if pagination.has_prev %}
-                <a href="{{ url_for('blog.index', page=(pagination.prev_num if pagination.prev_num > 1 else None), q=search or None) }}" rel="prev">قبلی</a>
+                <a href="{{ url_for(list_endpoint, page=(pagination.prev_num if pagination.prev_num > 1 else None), q=search or None, **list_args) }}" rel="prev">قبلی</a>
             {% endif %}
 
             {% for number in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
@@ -90,7 +107,7 @@
                     {% if number == pagination.page %}
                         <span class="current" aria-current="page">{{ number }}</span>
                     {% else %}
-                        <a href="{{ url_for('blog.index', page=(number if number > 1 else None), q=search or None) }}">{{ number }}</a>
+                        <a href="{{ url_for(list_endpoint, page=(number if number > 1 else None), q=search or None, **list_args) }}">{{ number }}</a>
                     {% endif %}
                 {% else %}
                     <span class="gap">…</span>
@@ -98,9 +115,19 @@
             {% endfor %}
 
             {% if pagination.has_next %}
-                <a href="{{ url_for('blog.index', page=pagination.next_num, q=search or None) }}" rel="next">بعدی</a>
+                <a href="{{ url_for(list_endpoint, page=pagination.next_num, q=search or None, **list_args) }}" rel="next">بعدی</a>
             {% endif %}
         </nav>
+    {% endif %}
+
+    {% if tag_cloud %}
+        <aside class="tag-cloud" aria-label="برچسب‌ها">
+            <h2>برچسب‌ها</h2>
+            {% for item, count in tag_cloud %}
+                <a class="taxonomy-chip small{% if active_tag and active_tag.id == item.id %} is-active{% endif %}"
+                   href="{{ url_for('blog.tag', slug=item.slug) }}">#{{ item.name }}</a>
+            {% endfor %}
+        </aside>
     {% endif %}
 
 </section>

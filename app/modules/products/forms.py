@@ -2,6 +2,7 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed, MultipleFileField
 from wtforms import (
+    BooleanField,
     StringField,
     TextAreaField,
     IntegerField,
@@ -52,6 +53,14 @@ class ProductForm(FlaskForm):
         "دسته‌بندی",
         coerce=int,
         validators=[DataRequired()]
+    )
+
+    is_digital = BooleanField("محصول فایلی (دانلودی)")
+
+    # نوع و حجم فایل هنگام ذخیره بررسی می‌شود (app/modules/products/files.py)
+    product_file = FileField(
+        "فایل برای دانلود",
+        validators=[Optional()]
     )
 
     image = FileField(

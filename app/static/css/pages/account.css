@@ -1,0 +1,58 @@
+/* حساب مشتری و دانلود فایل‌ها */
+.account-switch {
+    margin: 18px 0 0;
+    text-align: center;
+    font-size: .92rem;
+    color: var(--text-secondary);
+}
+
+.account-switch a {
+    color: var(--blue-neon);
+}
+
+.header-actions form {
+    display: inline;
+}
+
+.download-list {
+    list-style: none;
+    margin: 0 0 12px;
+    padding: 0;
+    display: grid;
+    gap: 12px;
+}
+
+.download-list li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+}
+
+.download-list li span {
+    flex: 1 1 200px;
+    font-weight: 600;
+}
+
+.download-list small,
+.download-admin small {
+    color: var(--text-secondary);
+}
+
+.download-admin {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border-color);
+    display: grid;
+    gap: 8px;
+}
+
+.download-admin h3 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.download-admin ul {
+    margin: 0;
+    padding-inline-start: 18px;
+}

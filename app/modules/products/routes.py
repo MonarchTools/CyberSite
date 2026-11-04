@@ -16,6 +16,10 @@ from werkzeug.utils import secure_filename
 from app.extensions import db
 from app.modules.products.models import Product, ProductImage, Category
 from app.modules.products.forms import ProductForm, CategoryForm
+from app.modules.products.files import (
+    remove_product_file, save_product_file
+)
+from app.modules.shop.models import Order, OrderItem, OrderStatus
 from app.uploads import remove_image, save_image
 
 
@@ -191,7 +195,9 @@ def index():
         )
 
     if in_stock:
-        query = query.filter(Product.stock > 0)
+        query = query.filter(
+            or_(Product.is_digital.is_(True), Product.stock > 0)
+        )
 
     pagination = query.order_by(
         SORT_OPTIONS[sort][1](),
@@ -235,7 +241,7 @@ def detail(product_id):
         "products/detail.html",
         product=product,
         related=related,
-        max_quantity=min(
+        max_quantity=1 if product.is_digital else min(
             max(product.stock, 1),
             current_app.config.get("MAX_CART_ITEM_QUANTITY", 20)
         )
@@ -281,9 +287,16 @@ def create_product():
     if form.validate_on_submit():
         image_filename = None
         saved_gallery = []
+        saved_file = None
 
         try:
+            if form.is_digital.data and not (
+                form.product_file.data and form.product_file.data.filename
+            ):
+                raise ValueError("برای محصول فایلی، فایل دانلود را انتخاب کنید.")
+
             image_filename = save_product_image(form.image.data)
+            saved_file = save_product_file(form.product_file.data)
 
             product = Product(
                 title=form.title.data.strip(),
@@ -291,8 +304,13 @@ def create_product():
                 price=form.price.data,
                 stock=form.stock.data,
                 category_id=form.category_id.data,
-                image_filename=image_filename
+                image_filename=image_filename,
+                is_digital=bool(form.is_digital.data),
             )
+
+            if saved_file:
+                (product.file_name, product.file_title,
+                 product.file_size) = saved_file
 
             add_gallery_images(product, form.gallery.data, saved_gallery)
 
@@ -309,6 +327,9 @@ def create_product():
             if image_filename:
                 remove_product_image(image_filename)
 
+            if saved_file:
+                remove_product_file(saved_file[0])
+
             remove_saved(saved_gallery)
             flash(str(error), "danger")
 
@@ -319,6 +340,9 @@ def create_product():
 
             if image_filename:
                 remove_product_image(image_filename)
+
+            if saved_file:
+                remove_product_file(saved_file[0])
 
             remove_saved(saved_gallery)
             current_app.logger.exception("Product creation failed")
@@ -356,13 +380,20 @@ def edit_product(product_id):
 
     if form.validate_on_submit():
         old_image = product.image_filename
+        old_file = product.file_name
         new_image = None
+        new_file = None
         saved_gallery = []
         removed_gallery = []
 
         try:
             if form.image.data:
                 new_image = save_product_image(form.image.data)
+
+            new_file = save_product_file(form.product_file.data)
+
+            if form.is_digital.data and not (new_file or old_file):
+                raise ValueError("برای محصول فایلی، فایل دانلود را انتخاب کنید.")
 
             # حذف تصاویر انتخاب‌شده (فقط شناسه‌های همین محصول)
             wanted = set()
@@ -385,14 +416,23 @@ def edit_product(product_id):
             product.price = form.price.data
             product.stock = form.stock.data
             product.category_id = form.category_id.data
+            product.is_digital = bool(form.is_digital.data)
 
             if new_image:
                 product.image_filename = new_image
+
+            if new_file:
+                (product.file_name, product.file_title,
+                 product.file_size) = new_file
 
             db.session.commit()
 
             if new_image and old_image:
                 remove_product_image(old_image)
+
+            # فایل جایگزین‌شده پاک می‌شود؛ خریدارانِ قبلی نسخهٔ تازه را می‌گیرند
+            if new_file and old_file:
+                remove_product_file(old_file)
 
             remove_saved(removed_gallery)
 
@@ -411,6 +451,9 @@ def edit_product(product_id):
             if new_image:
                 remove_product_image(new_image)
 
+            if new_file:
+                remove_product_file(new_file[0])
+
             remove_saved(saved_gallery)
             flash(str(error), "danger")
 
@@ -427,6 +470,9 @@ def edit_product(product_id):
 
             if new_image:
                 remove_product_image(new_image)
+
+            if new_file:
+                remove_product_file(new_file[0])
 
             remove_saved(saved_gallery)
             current_app.logger.exception("Product update failed")
@@ -450,6 +496,23 @@ def delete_product(product_id):
 
     image_filename = product.image_filename
     gallery_files = [image.filename for image in product.gallery]
+    file_name = product.file_name
+
+    # خریداران پرداخت‌کرده باید بتوانند فایل را دانلود کنند
+    has_buyers = db.session.query(OrderItem.id).join(
+        Order, Order.id == OrderItem.order_id
+    ).filter(
+        OrderItem.product_id == product.id,
+        OrderItem.is_digital.is_(True),
+        Order.status == OrderStatus.PAID,
+    ).first()
+
+    if has_buyers:
+        flash(
+            "این محصول فایلی خریدار دارد و حذف نمی‌شود تا دانلود آن‌ها قطع نشود.",
+            "warning"
+        )
+        return redirect(url_for("products.manage_products"))
 
     try:
         db.session.delete(product)
@@ -457,6 +520,9 @@ def delete_product(product_id):
 
         if image_filename:
             remove_product_image(image_filename)
+
+        if file_name:
+            remove_product_file(file_name)
 
         remove_saved(gallery_files)
 

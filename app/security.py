@@ -22,6 +22,7 @@ WEAK_KEYS = {
 # مسیرهایی که اطلاعات شخصی یا مدیریتی نشان می‌دهند و نباید کش شوند
 PRIVATE_PREFIXES = (
     "/admin",
+    "/account",
     "/shop/manage",
     "/shop/order",
     "/shop/checkout",
@@ -33,6 +34,7 @@ PRIVATE_PREFIXES = (
     "/slides/create",
     "/slides/edit",
     "/blog/comments",
+    "/blog/categories",
     "/blog/manage",
     "/blog/create",
     "/blog/edit",
@@ -126,5 +128,7 @@ def init_security(app):
         if request.path.startswith(PRIVATE_PREFIXES):
             headers["Cache-Control"] = "no-store, max-age=0"
             headers["Pragma"] = "no-cache"
+            # موتورهای جست‌وجو نباید صفحه‌های مدیریتی و سفارش را ایندکس کنند
+            headers["X-Robots-Tag"] = "noindex, nofollow"
 
         return response

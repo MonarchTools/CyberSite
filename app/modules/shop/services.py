@@ -10,7 +10,9 @@ from app.notifications import notify_order_paid
 from app.extensions import db
 from app.modules.products.models import Product
 from app.modules.shop.gateways import GatewayError
-from app.modules.shop.models import Order, OrderItem, OrderStatus
+from app.modules.shop.models import (
+    Fulfillment, Order, OrderItem, OrderStatus
+)
 from app.utils import utcnow_naive
 
 
@@ -92,13 +94,16 @@ def get_cart_lines():
         if product is None:
             continue
 
-        cleaned[product_id] = quantity
         issue = ""
 
-        if product.stock <= 0:
+        if product.is_digital:
+            quantity = 1   # فایل را یک‌بار می‌خرند؛ موجودی هم معنا ندارد
+        elif product.stock <= 0:
             issue = "ناموجود"
         elif quantity > product.stock:
             issue = f"فقط {product.stock} عدد موجود است"
+
+        cleaned[product_id] = quantity
 
         lines.append(CartLine(product, quantity, issue))
 
@@ -110,6 +115,13 @@ def get_cart_lines():
 
 def add_to_cart(product, quantity):
     """(موفق؟، پیام)."""
+    if product.is_digital:
+        cart = _read_cart()
+        cart[product.id] = 1
+        _write_cart(cart)
+
+        return True, "به سبد خرید اضافه شد."
+
     if product.stock <= 0:
         return False, "این محصول ناموجود است."
 
@@ -131,6 +143,8 @@ def set_cart_quantity(product, quantity):
 
     if quantity <= 0:
         cart.pop(product.id, None)
+    elif product.is_digital:
+        cart[product.id] = 1
     else:
         cart[product.id] = min(quantity, _max_quantity())
 
@@ -151,6 +165,9 @@ def reserve_stock(order):
     تغییرات داخل تراکنش فعلی‌اند؛ هنگام False فراخواننده باید rollback کند.
     """
     for item in order.items:
+        if item.is_digital:
+            continue   # محصول فایلی موجودی انبار ندارد
+
         if item.product_id is None:
             return False
 
@@ -171,7 +188,7 @@ def reserve_stock(order):
 
 def release_stock(order):
     for item in order.items:
-        if item.product_id is None:
+        if item.is_digital or item.product_id is None:
             continue
 
         db.session.execute(
@@ -223,9 +240,10 @@ def cancel_session_pending_order():
     db.session.commit()
 
 
-def create_order(lines, customer):
+def create_order(lines, customer, customer_id=None):
     """سفارش را با اقلام و رزرو موجودی می‌سازد (commit نمی‌کند). اگر موجودی نبود None."""
     order = Order(
+        customer_id=customer_id,
         total_rial=sum(line.line_total for line in lines),
         full_name=customer["full_name"],
         phone=customer["phone"],
@@ -237,6 +255,7 @@ def create_order(lines, customer):
                 title=line.product.title,
                 unit_price_rial=line.unit_price,
                 quantity=line.quantity,
+                is_digital=bool(line.product.is_digital),
             )
             for line in lines
         ],
@@ -325,12 +344,18 @@ def _finalize(order, gateway, status_param, recheck):
         fail_order(order)
         return "danger", f"پرداخت تأیید نشد: {error}"
 
+    paid_fields = {"ref_id": ref_id, "paid_at": utcnow_naive()}
+
+    # سفارشی که فقط فایل دارد ارسال فیزیکی ندارد: همان لحظهٔ پرداخت «تحویل‌شده» است
+    if order.items and all(item.is_digital for item in order.items):
+        paid_fields["fulfillment"] = Fulfillment.DELIVERED
+        paid_fields["delivered_at"] = utcnow_naive()
+
     order._just_paid = _transition(
         order,
         OrderStatus.PENDING,
         OrderStatus.PAID,
-        ref_id=ref_id,
-        paid_at=utcnow_naive(),
+        **paid_fields,
     )
 
     return "success", "پرداخت با موفقیت انجام شد. سپاس از خرید شما."

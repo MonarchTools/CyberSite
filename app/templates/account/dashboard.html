@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}حساب من | CyberSite{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/products.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/shop.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/account.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="public-store shop-page">
+
+    <div class="store-header">
+        <div>
+            <p class="admin-label">CYBERSITE / ACCOUNT</p>
+            <h1>حساب من</h1>
+            <p>{{ customer.full_name }} — <span dir="ltr">{{ customer.email }}</span></p>
+        </div>
+
+        <div class="header-actions">
+            <a class="store-button" href="{{ url_for('customers.change_password') }}">تغییر رمز</a>
+            <form method="POST" action="{{ url_for('customers.logout') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="store-button" type="submit">خروج</button>
+            </form>
+        </div>
+    </div>
+
+    {% include "components/flashes.html" %}
+
+    <div class="shop-card">
+        <h2 class="card-title">فایل‌های خریداری‌شده</h2>
+
+        {% if downloads %}
+            <div class="product-table-wrap">
+                <table class="product-table">
+                    <thead>
+                        <tr><th>فایل</th><th>حجم</th><th>دانلود باقی‌مانده</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        {% for order, item in downloads %}
+                            {% set product = files.get(item.product_id) %}
+                            {% set left = limit - item.download_count %}
+                            <tr>
+                                <td>{{ item.title }}</td>
+                                <td>{% if product and product.file_size %}{{ (product.file_size / 1048576)|round(1) }} مگابایت{% else %}—{% endif %}</td>
+                                <td>{{ left if left > 0 else 0 }} از {{ limit }}</td>
+                                <td>
+                                    {% if product and product.file_name and left > 0 %}
+                                        <a class="store-button small"
+                                           href="{{ url_for('customers.download', item_id=item.id) }}">دانلود</a>
+                                    {% elif left <= 0 %}
+                                        <small>سقف دانلود تمام شد؛ با ما تماس بگیرید</small>
+                                    {% else %}
+                                        <small>فایل در دسترس نیست؛ با ما تماس بگیرید</small>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="empty-state">هنوز فایلی نخریده‌اید. <a href="{{ url_for('products.index') }}">رفتن به فروشگاه</a></p>
+        {% endif %}
+    </div>
+
+    <div class="shop-card">
+        <h2 class="card-title">سفارش‌های من</h2>
+
+        {% if orders %}
+            <div class="product-table-wrap">
+                <table class="product-table">
+                    <thead>
+                        <tr><th>سفارش</th><th>تاریخ (UTC)</th><th>مبلغ</th><th>وضعیت</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                            <tr>
+                                <td>{{ order.id }}</td>
+                                <td dir="ltr">{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>{{ order.total_rial|rial }}</td>
+                                <td><span class="status-badge status-{{ order.display_status }}">{{ order.display_label }}</span></td>
+                                <td><a href="{{ url_for('shop.order_detail', code=order.public_code) }}">جزئیات</a></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="empty-state">هنوز سفارشی ثبت نکرده‌اید.</p>
+        {% endif %}
+    </div>
+
+</section>
+{% endblock %}

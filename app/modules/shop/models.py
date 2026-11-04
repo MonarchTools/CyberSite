@@ -74,6 +74,15 @@ class Order(db.Model):
     email = db.Column(db.String(120), nullable=True)
     note = db.Column(db.Text, nullable=True)
 
+    # سفارش‌دهندهٔ واردشده (خرید فقط با حساب مشتری ممکن است)
+    customer_id = db.Column(
+        db.Integer,
+        db.ForeignKey("customers.id"),
+        nullable=True,
+        index=True
+    )
+    customer = db.relationship("Customer", back_populates="orders")
+
     gateway = db.Column(db.String(30), nullable=True)
     authority = db.Column(db.String(64), unique=True, nullable=True, index=True)
     ref_id = db.Column(db.String(64), nullable=True)
@@ -147,6 +156,14 @@ class OrderItem(db.Model):
     title = db.Column(db.String(150), nullable=False)
     unit_price_rial = db.Column(db.BigInteger, nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
+
+    # نسخهٔ لحظهٔ خرید: آیا فایلی بود؟ و چند بار دانلود شده است
+    is_digital = db.Column(
+        db.Boolean, nullable=False, default=False, server_default="0"
+    )
+    download_count = db.Column(
+        db.Integer, nullable=False, default=0, server_default="0"
+    )
 
     order = db.relationship("Order", back_populates="items")
 
