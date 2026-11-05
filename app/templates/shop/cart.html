@@ -94,10 +94,34 @@
                 </table>
             </div>
 
+            <div class="discount-box">
+                {% if pricing.code %}
+                    <p>
+                        کد تخفیف <strong dir="ltr">{{ pricing.code.code }}</strong> اعمال شده است.
+                    </p>
+                    <form method="POST" action="{{ url_for('shop.cart_discount_remove') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="delete-button" type="submit">برداشتن کد</button>
+                    </form>
+                {% else %}
+                    <form method="POST" action="{{ url_for('shop.cart_discount') }}" class="discount-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <label for="discount-code">کد تخفیف دارید؟</label>
+                        <input class="admin-input" id="discount-code" name="code" type="text"
+                               maxlength="40" dir="ltr" autocomplete="off"
+                               autocapitalize="characters" spellcheck="false">
+                        <button class="store-button small" type="submit">اعمال</button>
+                    </form>
+                {% endif %}
+            </div>
+
             <div class="cart-summary">
-                <div>
-                    <span>جمع کل</span>
-                    <strong>{{ total|rial }}</strong>
+                <div class="price-rows">
+                    {% if pricing.code %}
+                        <p><span>جمع اقلام</span> <span>{{ total|rial }}</span></p>
+                        <p class="discount-row"><span>تخفیف</span> <span>− {{ pricing.discount|rial }}</span></p>
+                    {% endif %}
+                    <p><span>قابل پرداخت</span> <strong>{{ pricing.payable|rial }}</strong></p>
                 </div>
 
                 {% if has_issue %}

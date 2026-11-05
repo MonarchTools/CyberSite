@@ -81,6 +81,51 @@ class LoginForm(FlaskForm):
     submit = SubmitField("ورود")
 
 
+class ForgotPasswordForm(FlaskForm):
+    email = StringField(
+        "ایمیل",
+        filters=[_email],
+        validators=[
+            DataRequired(),
+            Length(max=120),
+            Regexp(EMAIL_PATTERN, message="ایمیل معتبر نیست.")
+        ]
+    )
+
+    captcha = StringField(
+        "کد امنیتی",
+        validators=[
+            DataRequired(),
+            Length(min=CAPTCHA_LENGTH, max=CAPTCHA_LENGTH + 4)
+        ]
+    )
+
+    submit = SubmitField("ارسال لینک بازیابی")
+
+
+class ResetPasswordForm(FlaskForm):
+    password = PasswordField(
+        "رمز جدید",
+        validators=[
+            DataRequired(),
+            Length(
+                min=MIN_PASSWORD, max=128,
+                message=f"رمز عبور باید حداقل {MIN_PASSWORD} کاراکتر باشد."
+            )
+        ]
+    )
+
+    password2 = PasswordField(
+        "تکرار رمز جدید",
+        validators=[
+            DataRequired(),
+            EqualTo("password", message="رمز جدید و تکرار آن یکی نیست.")
+        ]
+    )
+
+    submit = SubmitField("ثبت رمز جدید")
+
+
 class ChangePasswordForm(FlaskForm):
     current_password = PasswordField("رمز فعلی", validators=[DataRequired()])
 

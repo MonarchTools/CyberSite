@@ -83,6 +83,18 @@ class Order(db.Model):
     )
     customer = db.relationship("Customer", back_populates="orders")
 
+    # تخفیف: total_rial مبلغ نهایی قابل پرداخت است (بعد از کسر تخفیف)
+    discount_rial = db.Column(
+        db.BigInteger, nullable=False, default=0, server_default="0"
+    )
+    discount_code = db.Column(db.String(40), nullable=True)   # نسخهٔ لحظهٔ خرید
+    discount_code_id = db.Column(
+        db.Integer,
+        db.ForeignKey("discount_codes.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True
+    )
+
     gateway = db.Column(db.String(30), nullable=True)
     authority = db.Column(db.String(64), unique=True, nullable=True, index=True)
     ref_id = db.Column(db.String(64), nullable=True)
@@ -115,6 +127,11 @@ class Order(db.Model):
         cascade="all, delete-orphan",
         lazy="selectin"
     )
+
+    @property
+    def subtotal_rial(self):
+        """جمع اقلام پیش از تخفیف."""
+        return int(self.total_rial) + int(self.discount_rial or 0)
 
     @property
     def status_label(self):

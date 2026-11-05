@@ -25,6 +25,8 @@
 ) }}
 {%- endmacro %}
 
+{% from "components/wish_button.html" import wish_button with context %}
+
 {% block content %}
 <section class="public-store">
 
@@ -98,6 +100,8 @@
     <div class="public-product-grid">
         {% for product in products %}
             <article class="public-product-card">
+
+                {{ wish_button(product) }}
 
                 <a class="product-card-link"
                    href="{{ url_for('products.detail', product_id=product.id) }}">

@@ -43,6 +43,10 @@
         </form>
 
         <p class="account-switch">
+            <a href="{{ url_for('customers.forgot_password') }}">رمز عبور را فراموش کرده‌اید؟</a>
+        </p>
+
+        <p class="account-switch">
             حساب ندارید؟
             <a href="{{ url_for('customers.register', next=next_url or None) }}">ثبت‌نام</a>
         </p>

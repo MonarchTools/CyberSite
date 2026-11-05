@@ -20,6 +20,7 @@ from app.modules.products.files import (
     remove_product_file, save_product_file
 )
 from app.modules.shop.models import Order, OrderItem, OrderStatus
+from app.modules.wishlist.models import WishlistItem
 from app.uploads import remove_image, save_image
 
 
@@ -515,6 +516,8 @@ def delete_product(product_id):
         return redirect(url_for("products.manage_products"))
 
     try:
+        # علاقه‌مندی‌های این محصول هم پاک شوند (SQLite کلید خارجی را خودش پاک نمی‌کند)
+        WishlistItem.query.filter_by(product_id=product.id).delete()
         db.session.delete(product)
         db.session.commit()
 

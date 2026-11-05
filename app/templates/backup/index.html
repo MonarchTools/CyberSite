@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}پشتیبان‌گیری | CyberSite{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/products.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/shop.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/account.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="store-admin shop-page">
+
+    <div class="store-header">
+        <div>
+            <p class="admin-label">CYBERSITE / BACKUP</p>
+            <h1>پشتیبان‌گیری</h1>
+            <p>یک فایل زیپ از دیتابیس و همهٔ فایل‌های آپلودشده</p>
+        </div>
+
+        <a class="store-button" href="{{ url_for('admin.index') }}">داشبورد</a>
+    </div>
+
+    {% include "components/flashes.html" %}
+
+    {% if not supported %}
+        <div class="shop-card">
+            <p>پشتیبان‌گیری داخلی فقط برای دیتابیس SQLite کار می‌کند. برای دیتابیس دیگر از ابزار خود آن دیتابیس استفاده کنید.</p>
+        </div>
+    {% else %}
+
+        {% if stale %}
+            <div class="admin-alert warning">
+                {% if last %}بیش از یک هفته از آخرین پشتیبان گذشته است.{% else %}هنوز هیچ پشتیبانی نگرفته‌اید.{% endif %}
+                همین حالا یکی بگیرید و در جای امنی (فلش، هارد دیگر، فضای ابری) نگه دارید.
+            </div>
+        {% endif %}
+
+        <div class="shop-card">
+            <h2 class="card-title">دانلود پشتیبان</h2>
+
+            <dl class="order-meta">
+                <dt>حجم دیتابیس</dt>
+                <dd>{{ (db_bytes / 1048576)|round(2) }} مگابایت</dd>
+
+                <dt>فایل‌های آپلودشده</dt>
+                <dd>{{ upload_files }} فایل — {{ (upload_bytes / 1048576)|round(1) }} مگابایت</dd>
+
+                <dt>آخرین پشتیبان (UTC)</dt>
+                <dd dir="ltr">{% if last %}{{ last.strftime('%Y-%m-%d %H:%M') }}{% else %}—{% endif %}</dd>
+            </dl>
+
+            <form method="POST" action="{{ url_for('backup.download') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="store-button" type="submit">دانلود پشتیبان کامل</button>
+            </form>
+
+            <p class="shop-note">
+                این فایل شامل اطلاعات مشتری‌ها و هش رمزهاست؛ آن را جای عمومی نگذارید.
+                فایل <code>.env</code> (کلیدها و رمز ایمیل) داخلش نیست و جدا نگه‌داری می‌شود.
+            </p>
+        </div>
+
+        <div class="shop-card">
+            <h2 class="card-title">بازگردانی پشتیبان</h2>
+
+            <p class="form-error">
+                هشدار: بازگردانی، دیتابیس و فایل‌های فعلی را با محتوای پشتیبان جایگزین می‌کند.
+                پیش از آن خودکار یک نسخهٔ ایمنی از وضعیت فعلی در پوشهٔ
+                <code>instance/backups</code> ذخیره می‌شود. بعد از بازگردانی باید دوباره وارد شوید.
+            </p>
+
+            <form method="POST" action="{{ url_for('backup.restore') }}"
+                  enctype="multipart/form-data"
+                  data-confirm="دیتابیس و فایل‌های فعلی با پشتیبان جایگزین می‌شوند. ادامه می‌دهید؟">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="admin-form-group">
+                    <label for="backup-file">فایل پشتیبان (zip، حداکثر {{ max_mb }} مگابایت)</label>
+                    <input class="admin-input" id="backup-file" type="file"
+                           name="backup_file" accept=".zip,application/zip" required>
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="backup-password">رمز عبور مدیر (برای تأیید)</label>
+                    <input class="admin-input" id="backup-password" type="password"
+                           name="password" autocomplete="current-password" required>
+                </div>
+
+                <div class="admin-form-group">
+                    <label><input type="checkbox" name="confirm" value="y" required>
+                        می‌دانم که اطلاعات فعلی جایگزین می‌شود.</label>
+                </div>
+
+                <button class="delete-button" type="submit">بازگردانی</button>
+            </form>
+        </div>
+    {% endif %}
+
+</section>
+{% endblock %}

@@ -21,6 +21,7 @@
         </div>
 
         <div class="header-actions">
+            <a class="store-button" href="{{ url_for('wishlist.index') }}">علاقه‌مندی‌ها</a>
             <a class="store-button" href="{{ url_for('customers.change_password') }}">تغییر رمز</a>
             <form method="POST" action="{{ url_for('customers.logout') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

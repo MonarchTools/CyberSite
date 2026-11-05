@@ -7,6 +7,10 @@ from flask_login import login_required
 from app.extensions import db
 from app.modules.customers.auth import current_customer, customer_required
 from app.modules.customers.routes import download_limit
+from app.modules.admin.throttle import (
+    lock_remaining, register_failure, register_success
+)
+from app.modules.discounts import service as discounts
 from app.modules.products.models import Product
 from app.modules.shop.forms import CheckoutForm, FulfillmentForm
 from app.modules.shop.gateways import GatewayError, get_gateway
@@ -65,14 +69,23 @@ def _get_order_by_code_or_404(code):
 
 # ---------------------------------------------------------------- سبد خرید
 
+DISCOUNT_SCOPE = "discount"
+
+
 @shop_bp.route("/cart")
 def cart():
     lines, total = get_cart_lines()
+
+    pricing = discounts.current_pricing(total, current_customer())
+
+    if pricing.dropped:
+        flash(pricing.error, "warning")
 
     return render_template(
         "shop/cart.html",
         lines=lines,
         total=total,
+        pricing=pricing,
         has_issue=any(line.issue for line in lines),
         min_payment=current_app.config["MIN_PAYMENT_RIAL"]
     )
@@ -85,6 +98,46 @@ def cart_add(product_id):
 
     ok, message = add_to_cart(product, quantity)
     flash(message, "success" if ok else "danger")
+
+    return redirect(url_for("shop.cart"))
+
+
+@shop_bp.route("/cart/discount", methods=["POST"])
+def cart_discount():
+    seconds = lock_remaining(DISCOUNT_SCOPE)
+
+    if seconds:
+        flash(
+            f"تلاش‌های ناموفق زیاد بود. حدود {seconds // 60 + 1} دقیقهٔ دیگر امتحان کنید.",
+            "danger"
+        )
+        return redirect(url_for("shop.cart"))
+
+    lines, total = get_cart_lines()
+
+    if not lines:
+        flash("سبد خرید شما خالی است.", "warning")
+        return redirect(url_for("shop.cart"))
+
+    result = discounts.evaluate(
+        request.form.get("code", ""), total, current_customer()
+    )
+
+    if result.error:
+        register_failure(DISCOUNT_SCOPE)
+        flash(result.error, "danger")
+    else:
+        register_success(DISCOUNT_SCOPE)
+        discounts.remember(result.code.code)
+        flash(f"کد تخفیف اعمال شد: {result.discount:,} ریال.", "success")
+
+    return redirect(url_for("shop.cart"))
+
+
+@shop_bp.route("/cart/discount/remove", methods=["POST"])
+def cart_discount_remove():
+    discounts.forget()
+    flash("کد تخفیف برداشته شد.", "success")
 
     return redirect(url_for("shop.cart"))
 
@@ -130,6 +183,12 @@ def checkout():
         )
         return redirect(url_for("shop.cart"))
 
+    pricing = discounts.current_pricing(total, customer)
+
+    if pricing.dropped:
+        flash(pricing.error, "warning")
+        return redirect(url_for("shop.cart"))
+
     form = CheckoutForm()
 
     # سفارشِ فقط-فایل ارسال ندارد؛ شمارهٔ موبایل لازم نیست
@@ -149,7 +208,8 @@ def checkout():
             "shop/checkout.html",
             form=form,
             lines=lines,
-            total=total
+            total=total,
+            pricing=pricing
         )
 
     try:
@@ -160,7 +220,8 @@ def checkout():
             "shop/checkout.html",
             form=form,
             lines=lines,
-            total=total
+            total=total,
+            pricing=pricing
         )
 
     expire_stale_orders()
@@ -173,6 +234,17 @@ def checkout():
         flash("موجودی برخی اقلام تغییر کرده است.", "warning")
         return redirect(url_for("shop.cart"))
 
+    # دوباره سنجیده می‌شود: با آزادشدن سفارش قبلی یا گذشت زمان ممکن است تغییر کرده باشد
+    previous = pricing.code.code if pricing.code else None
+    pricing = discounts.current_pricing(total, customer)
+
+    if previous and (pricing.dropped or pricing.code is None):
+        flash(
+            pricing.error or "کد تخفیف دیگر معتبر نیست؛ سبد را دوباره بررسی کنید.",
+            "warning"
+        )
+        return redirect(url_for("shop.cart"))
+
     order = create_order(
         lines,
         {
@@ -181,11 +253,12 @@ def checkout():
             "email": form.email.data,
             "note": form.note.data,
         },
-        customer_id=customer.id
+        customer_id=customer.id,
+        discount=pricing if pricing.code else None
     )
 
     if order is None:
-        flash("موجودی برخی اقلام تغییر کرده است.", "warning")
+        flash("موجودی یا ظرفیت کد تخفیف تغییر کرده است؛ سبد را بررسی کنید.", "warning")
         return redirect(url_for("shop.cart"))
 
     order.gateway = gateway.name
@@ -213,6 +286,8 @@ def checkout():
     db.session.commit()
 
     session[PENDING_ORDER_KEY] = order.public_code
+
+    discounts.forget()   # کد تخفیف به سفارش چسبیده است
 
     return redirect(gateway.payment_url(authority))
 

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} | CyberSite{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/products.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="product-form-page">
+    <div class="product-form-card">
+        <p class="admin-label">CYBERSITE / DISCOUNT</p>
+        <h1>{{ page_title }}</h1>
+
+        {% include "components/flashes.html" %}
+
+        <form method="POST" novalidate>
+            {{ form.hidden_tag() }}
+
+            {% for field in (form.code, form.kind, form.value, form.min_order_rial,
+                             form.max_discount_rial, form.max_uses, form.expires_on) %}
+                <div class="admin-form-group">
+                    {{ field.label }}
+                    {% if field.name == 'expires_on' %}
+                        {{ field(class="admin-input", type="date", dir="ltr") }}
+                    {% elif field.name == 'code' %}
+                        {{ field(class="admin-input", dir="ltr", autocomplete="off", placeholder="SUMMER20") }}
+                    {% else %}
+                        {{ field(class="admin-input") }}
+                    {% endif %}
+                    {% for error in field.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+                </div>
+            {% endfor %}
+
+            <div class="admin-form-group">
+                <label>{{ form.once_per_customer() }} {{ form.once_per_customer.label.text }}</label>
+            </div>
+
+            <div class="admin-form-group">
+                <label>{{ form.is_active() }} {{ form.is_active.label.text }}</label>
+            </div>
+
+            {{ form.submit(class="store-button") }}
+
+            <a class="admin-back" href="{{ url_for('discounts.manage') }}">بازگشت</a>
+        </form>
+    </div>
+</section>
+{% endblock %}

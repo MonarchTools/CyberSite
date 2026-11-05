@@ -15,6 +15,8 @@
       href="{{ url_for('static', filename='css/pages/shop.css') }}">
 {% endblock %}
 
+{% from "components/wish_button.html" import wish_button with context %}
+
 {% block content %}
 <section class="public-store">
 
@@ -67,6 +69,11 @@
             <h1>{{ product.title }}</h1>
 
             <p class="product-price">{{ product.price|rial }}</p>
+
+            <div class="wish-line">
+                {{ wish_button(product) }}
+                <small>علاقه‌مندی‌ها</small>
+            </div>
 
             {% if product.in_stock %}
                 <p class="stock-available">

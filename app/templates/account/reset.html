@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}رمز جدید | CyberSite{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/account.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="admin-auth">
+    <div class="admin-auth-card">
+
+        <div class="admin-icon">C</div>
+
+        <p class="admin-label">CYBERSITE / ACCOUNT</p>
+        <h1>رمز عبور جدید</h1>
+
+        {% include "components/flashes.html" %}
+
+        <form method="POST" action="{{ url_for('customers.reset_password', token=token) }}" novalidate>
+            {{ form.hidden_tag() }}
+
+            <div class="admin-form-group">
+                {{ form.password.label }}
+                {{ form.password(class="admin-input", autocomplete="new-password") }}
+                <small>حداقل ۸ کاراکتر</small>
+                {% for error in form.password.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+            </div>
+
+            <div class="admin-form-group">
+                {{ form.password2.label }}
+                {{ form.password2(class="admin-input", autocomplete="new-password") }}
+                {% for error in form.password2.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+            </div>
+
+            {{ form.submit(class="store-button") }}
+        </form>
+
+    </div>
+</section>
+{% endblock %}

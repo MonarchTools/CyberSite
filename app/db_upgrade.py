@@ -28,6 +28,9 @@ ADDED_COLUMNS = (
     ("orders", "shipped_at", "DATETIME"),
     ("orders", "delivered_at", "DATETIME"),
     ("orders", "admin_note", "TEXT"),
+    ("orders", "discount_rial", "BIGINT NOT NULL DEFAULT 0"),
+    ("orders", "discount_code", "VARCHAR(40)"),
+    ("orders", "discount_code_id", "INTEGER REFERENCES discount_codes(id)"),
 )
 
 

@@ -68,9 +68,20 @@
                 {% endfor %}
             </ul>
 
+            {% if pricing.code %}
+                <div class="cart-summary-total">
+                    <span>جمع اقلام</span>
+                    <span>{{ total|rial }}</span>
+                </div>
+                <div class="cart-summary-total discount-row">
+                    <span>تخفیف ({{ pricing.code.code }})</span>
+                    <span>− {{ pricing.discount|rial }}</span>
+                </div>
+            {% endif %}
+
             <div class="cart-summary-total">
-                <span>جمع کل</span>
-                <strong>{{ total|rial }}</strong>
+                <span>قابل پرداخت</span>
+                <strong>{{ pricing.payable|rial }}</strong>
             </div>
         </aside>
 

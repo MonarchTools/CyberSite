@@ -27,6 +27,13 @@
         </form>
     </div>
 
+    {% if backup_stale %}
+        <div class="admin-alert warning">
+            پشتیبان تازه‌ای از سایت ندارید.
+            <a href="{{ url_for('backup.index') }}">همین حالا بگیرید</a>
+        </div>
+    {% endif %}
+
     <div class="dashboard-grid">
 
         <a href="{{ url_for('products.manage_products') }}"
@@ -48,6 +55,20 @@
             <span>▣</span>
             <h2>سفارش‌ها{% if new_orders %}<b class="card-badge">{{ new_orders }}</b>{% endif %}</h2>
             <p>پیگیری پرداخت و ارسال سفارش‌ها</p>
+        </a>
+
+        <a href="{{ url_for('backup.index') }}"
+           class="dashboard-card">
+            <span>⇩</span>
+            <h2>پشتیبان‌گیری</h2>
+            <p>دانلود و بازگردانی دیتابیس و فایل‌ها</p>
+        </a>
+
+        <a href="{{ url_for('discounts.manage') }}"
+           class="dashboard-card">
+            <span>٪</span>
+            <h2>کدهای تخفیف</h2>
+            <p>ساخت و مدیریت کد تخفیف</p>
         </a>
 
         <a href="{{ url_for('contact.manage_messages') }}"

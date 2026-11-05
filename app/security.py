@@ -42,6 +42,7 @@ PRIVATE_PREFIXES = (
     "/products/manage",
     "/products/create",
     "/products/edit",
+    "/discounts",
 )
 
 # بدون inline script/style؛ فقط منابع خود سایت

@@ -26,6 +26,9 @@ class Config:
     # سقف کل یک درخواست (مدیر می‌تواند چند عکس را با هم بفرستد).
     # بازدیدکنندهٔ بدون ورود فقط تا ANONYMOUS_MAX_BODY_BYTES اجازه دارد.
     # محصولات فایلی (دانلودی)
+    # اعتبار لینک بازیابی رمز مشتری (دقیقه)
+    PASSWORD_RESET_MINUTES = int(os.getenv("PASSWORD_RESET_MINUTES", "60") or 60)
+
     DIGITAL_FILE_MAX_MB = int(os.getenv("DIGITAL_FILE_MAX_MB", "200") or 200)
     DIGITAL_DOWNLOAD_LIMIT = int(os.getenv("DIGITAL_DOWNLOAD_LIMIT", "5") or 5)
     DIGITAL_ALLOWED_EXTENSIONS = (
@@ -33,9 +36,13 @@ class Config:
         "docx", "xlsx", "pptx", "csv", "json", "py",
     )
 
+    # حداکثر حجم فایل پشتیبان برای بازگردانی (مگابایت)
+    BACKUP_MAX_MB = int(os.getenv("BACKUP_MAX_MB", "500") or 500)
+
     MAX_CONTENT_LENGTH = max(
         24 * 1024 * 1024,
         (int(os.getenv("DIGITAL_FILE_MAX_MB", "200") or 200) + 4) * 1024 * 1024,
+        (int(os.getenv("BACKUP_MAX_MB", "500") or 500) + 4) * 1024 * 1024,
     )
     ANONYMOUS_MAX_BODY_BYTES = 512 * 1024
     SQLALCHEMY_TRACK_MODIFICATIONS = False

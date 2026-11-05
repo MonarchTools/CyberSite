@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}کدهای تخفیف | CyberSite{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/products.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="store-admin">
+
+    <div class="store-header">
+        <div>
+            <p class="admin-label">CYBERSITE / DISCOUNTS</p>
+            <h1>کدهای تخفیف</h1>
+            <p>ساخت و مدیریت کد تخفیف برای سبد خرید</p>
+        </div>
+
+        <a href="{{ url_for('discounts.create') }}" class="store-button">+ کد جدید</a>
+    </div>
+
+    {% include "components/flashes.html" %}
+
+    <div class="products-panel">
+        <div class="product-table-wrap">
+            <table class="product-table">
+                <thead>
+                    <tr>
+                        <th>کد</th>
+                        <th>تخفیف</th>
+                        <th>حداقل سبد</th>
+                        <th>استفاده</th>
+                        <th>انقضا</th>
+                        <th>وضعیت</th>
+                        <th>عملیات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for code in codes %}
+                        <tr>
+                            <td dir="ltr"><strong>{{ code.code }}</strong></td>
+                            <td>
+                                {{ code.value_label }}
+                                {% if code.max_discount_rial %}<small>(حداکثر {{ code.max_discount_rial|rial }})</small>{% endif %}
+                            </td>
+                            <td>{% if code.min_order_rial %}{{ code.min_order_rial|rial }}{% else %}—{% endif %}</td>
+                            <td>{{ code.used_count }}{% if code.max_uses %} از {{ code.max_uses }}{% endif %}</td>
+                            <td dir="ltr">{% if code.expires_at %}{{ code.expires_at.strftime('%Y-%m-%d') }}{% else %}—{% endif %}</td>
+                            <td>
+                                {% if not code.is_active %}غیرفعال
+                                {% elif code.is_expired %}منقضی
+                                {% elif code.is_used_up %}تمام‌شده
+                                {% else %}فعال{% endif %}
+                            </td>
+                            <td class="product-actions">
+                                <a href="{{ url_for('discounts.edit', code_id=code.id) }}">ویرایش</a>
+
+                                <form method="POST" action="{{ url_for('discounts.toggle', code_id=code.id) }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button class="store-button small" type="submit">
+                                        {{ 'غیرفعال‌کردن' if code.is_active else 'فعال‌کردن' }}
+                                    </button>
+                                </form>
+
+                                <form method="POST" action="{{ url_for('discounts.delete', code_id=code.id) }}"
+                                      data-confirm="از حذف این کد مطمئن هستید؟">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button class="delete-button" type="submit">حذف</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="7">هنوز کدی ساخته نشده است.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <a class="admin-back" href="{{ url_for('admin.index') }}">بازگشت به داشبورد</a>
+</section>
+{% endblock %}

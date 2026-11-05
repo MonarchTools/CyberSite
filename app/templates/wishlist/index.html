@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}علاقه‌مندی‌های من | CyberSite{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/products.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/shop.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/account.css') }}">
+{% endblock %}
+
+{% from "components/wish_button.html" import wish_button with context %}
+
+{% block content %}
+<section class="public-store shop-page">
+
+    <div class="store-header">
+        <div>
+            <p class="admin-label">CYBERSITE / WISHLIST</p>
+            <h1>علاقه‌مندی‌های من</h1>
+            <p>{{ products|length }} محصول</p>
+        </div>
+
+        <a class="store-button" href="{{ url_for('customers.dashboard') }}">حساب من</a>
+    </div>
+
+    {% include "components/flashes.html" %}
+
+    <div class="public-product-grid">
+        {% for product in products %}
+            <article class="public-product-card">
+                {{ wish_button(product) }}
+
+                <a class="product-card-link"
+                   href="{{ url_for('products.detail', product_id=product.id) }}">
+                    {% if product.image_filename %}
+                        <img src="{{ url_for('products.product_image', filename=product.image_filename) }}"
+                             alt="{{ product.title }}" loading="lazy">
+                    {% else %}
+                        <div class="product-no-image">CYBER PRODUCT</div>
+                    {% endif %}
+                </a>
+
+                <div class="public-product-content">
+                    <small>{{ product.category.name }}</small>
+                    <h2>
+                        <a href="{{ url_for('products.detail', product_id=product.id) }}">{{ product.title }}</a>
+                    </h2>
+                    <strong>{{ product.price|rial }}</strong>
+
+                    {% if product.in_stock %}
+                        <form method="POST" action="{{ url_for('shop.cart_add', product_id=product.id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="quantity" value="1">
+                            <button class="store-button small" type="submit">افزودن به سبد</button>
+                        </form>
+                    {% else %}
+                        <span class="stock-unavailable">ناموجود</span>
+                    {% endif %}
+                </div>
+            </article>
+        {% else %}
+            <p class="empty-state">
+                هنوز محصولی را به علاقه‌مندی‌ها اضافه نکرده‌اید.
+                <a href="{{ url_for('products.index') }}">رفتن به فروشگاه</a>
+            </p>
+        {% endfor %}
+    </div>
+
+</section>
+{% endblock %}

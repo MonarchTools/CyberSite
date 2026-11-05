@@ -17,9 +17,13 @@ from app.modules.customers.auth import (
     safe_next
 )
 from app.modules.customers.forms import (
-    ChangePasswordForm, LoginForm, RegisterForm
+    ChangePasswordForm, ForgotPasswordForm, LoginForm, RegisterForm,
+    ResetPasswordForm
 )
 from app.modules.customers.models import Customer
+from app.modules.customers.reset import make_token, read_token, reset_minutes
+from app.notifications import is_configured, send_mail
+from app.seo import base_url
 from app.modules.products.files import stored_path
 from app.modules.products.models import Product
 from app.modules.shop.models import Order, OrderItem, OrderStatus
@@ -29,6 +33,7 @@ customers_bp = Blueprint("customers", __name__, url_prefix="/account")
 
 CAPTCHA_PURPOSE = "register"
 THROTTLE_SCOPE = "customer"
+RESET_SCOPE = "reset"
 ORDERS_SHOWN = 50
 
 # برای ایمیل ناموجود هم یک هش واقعی بررسی می‌شود تا زمان پاسخ چیزی لو ندهد
@@ -123,6 +128,105 @@ def login():
         flash("ایمیل یا رمز عبور اشتباه است.", "danger")
 
     return render_template("account/login.html", form=form, next_url=next_url)
+
+
+# ------------------------------------------------------ بازیابی رمز عبور
+
+def _reset_email_body(customer, link):
+    return (
+        f"سلام {customer.full_name}،\n\n"
+        "برای ساخت رمز عبور تازه در CyberSite روی لینک زیر بزنید:\n"
+        f"{link}\n\n"
+        f"این لینک {reset_minutes()} دقیقه اعتبار دارد و فقط یک‌بار قابل استفاده است.\n"
+        "اگر شما این درخواست را نداده‌اید، این ایمیل را نادیده بگیرید؛ "
+        "رمز شما تغییری نمی‌کند."
+    )
+
+
+@customers_bp.route("/forgot", methods=["GET", "POST"])
+def forgot_password():
+    if current_customer() is not None:
+        return redirect(url_for("customers.dashboard"))
+
+    form = ForgotPasswordForm()
+
+    seconds = lock_remaining(RESET_SCOPE)
+
+    if seconds:
+        flash(
+            f"درخواست‌های بازیابی زیاد بود. حدود {seconds // 60 + 1} دقیقهٔ دیگر "
+            "دوباره تلاش کنید.",
+            "danger"
+        )
+        response = Response(
+            render_template("account/forgot.html", form=form), status=429
+        )
+        response.headers["Retry-After"] = str(seconds)
+        return response
+
+    if form.validate_on_submit():
+        # هر درخواست شمرده می‌شود تا کسی با این فرم ایمیل‌ها را بمباران نکند
+        register_failure(RESET_SCOPE)
+
+        if not verify_challenge(form.captcha.data, purpose=CAPTCHA_PURPOSE):
+            flash("کد امنیتی اشتباه یا منقضی شده است.", "danger")
+            form.captcha.data = ""
+        else:
+            customer = Customer.query.filter_by(email=form.email.data).first()
+
+            if customer is not None and customer.is_active:
+                link = base_url() + url_for(
+                    "customers.reset_password", token=make_token(customer)
+                )
+
+                if is_configured():
+                    send_mail(
+                        customer.email,
+                        "بازیابی رمز عبور CyberSite",
+                        _reset_email_body(customer, link),
+                    )
+                else:
+                    # ایمیل تنظیم نشده (مثلاً روی کامپیوتر خودتان): لینک در کنسول چاپ می‌شود
+                    current_app.logger.warning(
+                        "MAIL تنظیم نشده؛ لینک بازیابی رمز برای %s: %s",
+                        customer.email, link
+                    )
+
+            # پاسخ همیشه یکسان است تا معلوم نشود کدام ایمیل‌ها حساب دارند
+            flash(
+                "اگر با این ایمیل حساب ساخته شده باشد، لینک بازیابی رمز برایش "
+                "ارسال شد. پوشهٔ اسپم را هم نگاه کنید.",
+                "success"
+            )
+
+            return redirect(url_for("customers.login"))
+
+    return render_template("account/forgot.html", form=form)
+
+
+@customers_bp.route("/reset/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    customer = read_token(token)
+
+    if customer is None:
+        flash("لینک بازیابی نامعتبر یا منقضی شده است؛ دوباره درخواست دهید.", "danger")
+        return redirect(url_for("customers.forgot_password"))
+
+    form = ResetPasswordForm()
+
+    if form.validate_on_submit():
+        customer.set_password(form.password.data)
+        db.session.commit()
+        register_success(THROTTLE_SCOPE)   # قفل ورود احتمالی این IP باز می‌شود
+
+        flash("رمز عبور تغییر کرد؛ با رمز جدید وارد شوید.", "success")
+        return redirect(url_for("customers.login"))
+
+    response = Response(render_template("account/reset.html", form=form, token=token))
+    # توکن در آدرس است؛ نباید از طریق Referer به سایت دیگری برود
+    response.headers["Referrer-Policy"] = "no-referrer"
+
+    return response
 
 
 @customers_bp.route("/captcha.png")

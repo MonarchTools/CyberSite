@@ -1,0 +1,13 @@
+{# دکمهٔ قلب: {% from "components/wish_button.html" import wish_button %} #}
+{% macro wish_button(product) -%}
+    {% set active = product.id in wishlist_ids %}
+    <form method="POST" class="wish-form"
+          action="{{ url_for('wishlist.toggle', product_id=product.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="next" value="{{ request.full_path.rstrip('?') }}">
+        <button type="submit" class="wish-button{{ ' active' if active }}"
+                aria-pressed="{{ 'true' if active else 'false' }}"
+                aria-label="{{ 'برداشتن از علاقه‌مندی‌ها' if active else 'افزودن به علاقه‌مندی‌ها' }}"
+                title="{{ 'برداشتن از علاقه‌مندی‌ها' if active else 'افزودن به علاقه‌مندی‌ها' }}">{{ '♥' if active else '♡' }}</button>
+    </form>
+{%- endmacro %}

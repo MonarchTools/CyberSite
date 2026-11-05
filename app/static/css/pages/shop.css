@@ -588,3 +588,45 @@
     border-radius: 10px;
     border: 1px solid var(--border-color);
 }
+
+/* ---------- کد تخفیف ---------- */
+
+.discount-box {
+    margin-top: 18px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--muted);
+}
+
+.discount-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.discount-form .admin-input {
+    width: 190px;
+    min-height: 0;
+}
+
+.price-rows {
+    display: grid;
+    gap: 6px;
+    min-width: 260px;
+}
+
+.price-rows p {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    margin: 0;
+}
+
+.discount-row,
+.discount-row span {
+    color: #4ade80;
+}

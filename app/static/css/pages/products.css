@@ -224,3 +224,51 @@
         padding: 17px;
     }
 }
+
+/* ---------- علاقه‌مندی (قلب) ---------- */
+
+.public-product-card {
+    position: relative;
+}
+
+.public-product-card > .wish-form {
+    position: absolute;
+    top: 10px;
+    inset-inline-start: 10px;
+    z-index: 2;
+}
+
+.wish-form {
+    margin: 0;
+}
+
+.wish-button {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+    background: rgba(0, 0, 0, .45);
+    color: var(--text);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    transition: transform .15s ease, color .15s ease, border-color .15s ease;
+}
+
+.wish-button:hover {
+    transform: scale(1.08);
+    border-color: #f87171;
+}
+
+.wish-button.active {
+    color: #f87171;
+    border-color: #f87171;
+}
+
+.wish-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 6px 0 14px;
+    color: var(--text-secondary);
+}

@@ -8,6 +8,9 @@ from sqlalchemy import update
 
 from app.notifications import notify_order_paid
 from app.extensions import db
+from app.modules.discounts.service import (
+    reclaim_usage, release_usage, reserve_usage
+)
 from app.modules.products.models import Product
 from app.modules.shop.gateways import GatewayError
 from app.modules.shop.models import (
@@ -198,6 +201,14 @@ def release_stock(order):
         )
 
 
+def release_reservation(order):
+    """موجودی و یک دفعه استفادهٔ کد تخفیفِ رزروشدهٔ سفارش را آزاد می‌کند."""
+    release_stock(order)
+
+    if order.discount_code_id is not None:
+        release_usage(order.discount_code_id)
+
+
 def _transition(order, from_status, to_status, **fields):
     """تغییر وضعیت اتمیک؛ فقط یک درخواست برنده می‌شود."""
     result = db.session.execute(
@@ -220,7 +231,7 @@ def expire_stale_orders():
 
     for order in stale:
         if _transition(order, OrderStatus.PENDING, OrderStatus.EXPIRED):
-            release_stock(order)
+            release_reservation(order)
 
     db.session.commit()
 
@@ -235,16 +246,27 @@ def cancel_session_pending_order():
     order = Order.query.filter_by(public_code=code).first()
 
     if order and _transition(order, OrderStatus.PENDING, OrderStatus.EXPIRED):
-        release_stock(order)
+        release_reservation(order)
 
     db.session.commit()
 
 
-def create_order(lines, customer, customer_id=None):
-    """سفارش را با اقلام و رزرو موجودی می‌سازد (commit نمی‌کند). اگر موجودی نبود None."""
+def create_order(lines, customer, customer_id=None, discount=None):
+    """سفارش را با اقلام و رزرو موجودی می‌سازد (commit نمی‌کند).
+
+    ``discount``: نتیجهٔ ``discounts.service.evaluate`` (Pricing با کد معتبر).
+    اگر موجودی یا ظرفیت کد تخفیف کم باشد None برمی‌گردد.
+    """
+    subtotal = sum(line.line_total for line in lines)
+    code = discount.code if discount is not None else None
+    amount = int(discount.discount) if code is not None else 0
+
     order = Order(
         customer_id=customer_id,
-        total_rial=sum(line.line_total for line in lines),
+        total_rial=subtotal - amount,
+        discount_rial=amount,
+        discount_code=code.code if code is not None else None,
+        discount_code_id=code.id if code is not None else None,
         full_name=customer["full_name"],
         phone=customer["phone"],
         email=customer.get("email") or None,
@@ -267,13 +289,17 @@ def create_order(lines, customer, customer_id=None):
         db.session.rollback()
         return None
 
+    if code is not None and not reserve_usage(code.id):
+        db.session.rollback()
+        return None
+
     return order
 
 
 def fail_order(order):
-    """سفارش پرداخت‌نشده را ناموفق می‌کند و موجودی را آزاد می‌کند."""
+    """سفارش پرداخت‌نشده را ناموفق می‌کند و موجودی (و کد تخفیف) را آزاد می‌کند."""
     if _transition(order, OrderStatus.PENDING, OrderStatus.FAILED):
-        release_stock(order)
+        release_reservation(order)
 
 
 # ------------------------------------------------------- نهایی‌سازی پرداخت
@@ -326,6 +352,9 @@ def _finalize(order, gateway, status_param, recheck):
                 "مهلت پرداخت تمام شده و موجودی دیگر کافی نیست. "
                 "اگر مبلغی کسر شده، درگاه آن را به حساب شما بازمی‌گرداند.",
             )
+
+        if order.discount_code_id is not None:
+            reclaim_usage(order.discount_code_id)
 
     try:
         ref_id = gateway.verify(order)

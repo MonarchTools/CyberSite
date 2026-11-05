@@ -14,6 +14,7 @@ from app.modules.admin.models import Admin
 from app.modules.comments.models import Comment, CommentStatus
 from app.modules.contact.models import ContactMessage
 from app.modules.shop.models import Fulfillment, Order, OrderStatus
+from app.modules.backup.routes import backup_is_stale
 from app.modules.admin.throttle import (
     lock_remaining,
     register_failure,
@@ -53,7 +54,8 @@ def index():
         admin=current_user,
         unread_messages=unread_messages,
         new_orders=new_orders,
-        pending_comments=pending_comments
+        pending_comments=pending_comments,
+        backup_stale=backup_is_stale()
     )
 
 
